@@ -62,53 +62,61 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const loadUserData = async (userId: string, isSignIn: boolean) => {
+    try {
+      if (isSignIn) {
+        const { data: currentProfile } = await supabase
+          .from("profiles")
+          .select("status")
+          .eq("id", userId)
+          .single();
+
+        if (currentProfile?.status === "pending_verification") {
+          await supabase
+            .from("profiles")
+            .update({ status: "onboarding_started" })
+            .eq("id", userId);
+        }
+      }
+      await fetchProfile(userId);
+      await fetchRoles(userId);
+    } catch (e) {
+      console.error("Error loading user data:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          try {
-            if (event === "SIGNED_IN" && session.user.email_confirmed_at) {
-              const { data: currentProfile } = await supabase
-                .from("profiles")
-                .select("status")
-                .eq("id", session.user.id)
-                .single();
-
-              if (currentProfile?.status === "pending_verification") {
-                await supabase
-                  .from("profiles")
-                  .update({ status: "onboarding_started" })
-                  .eq("id", session.user.id);
-              }
-            }
-            await fetchProfile(session.user.id);
-            await fetchRoles(session.user.id);
-          } catch (e) {
-            console.error("Error loading user data:", e);
-          }
+          // Defer database calls to avoid deadlock in auth callback
+          setTimeout(() => {
+            loadUserData(
+              session.user.id,
+              event === "SIGNED_IN" && !!session.user.email_confirmed_at
+            );
+          }, 0);
         } else {
           setProfile(null);
           setRoles([]);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        try {
-          await fetchProfile(session.user.id);
-          await fetchRoles(session.user.id);
-        } catch (e) {
-          console.error("Error loading user data:", e);
-        }
+        loadUserData(session.user.id, false);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
