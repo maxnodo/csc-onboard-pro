@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        from: 'Corporación Socialista de Cemento <no-reply@notify.csc.otronodo.com>',
         to: [email],
         subject: 'Documentación Aprobada — CSC',
         html,
