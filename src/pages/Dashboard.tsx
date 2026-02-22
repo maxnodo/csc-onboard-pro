@@ -1,8 +1,10 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
-import { categoryLabels } from "@/lib/document-matrix";
+import { Clock, CheckCircle2, XCircle, AlertTriangle, FileWarning } from "lucide-react";
+import { categoryLabels, documentMatrixByCategory } from "@/lib/document-matrix";
 import AppLayout from "@/components/AppLayout";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const statusConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   pending_verification: { label: "Verificación Pendiente", icon: <Clock className="h-5 w-5" />, color: "bg-warning/10 text-warning" },
@@ -16,15 +18,36 @@ const statusConfig: Record<string, { label: string; icon: React.ReactNode; color
 };
 
 const Dashboard = () => {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
+
+  const { data: rejectedDocs } = useQuery({
+    queryKey: ["rejected-documents", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("document_type, rejection_reason, category")
+        .eq("user_id", user!.id)
+        .eq("status", "rejected");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   if (!profile) return null;
 
   const status = statusConfig[profile.status] || statusConfig.pending_verification;
 
+  // Build a label map from the document matrix
+  const docLabelMap: Record<string, string> = {};
+  if (profile.category) {
+    const matrix = documentMatrixByCategory[profile.category] || [];
+    matrix.forEach((req) => { docLabelMap[req.key] = req.label; });
+  }
+
   return (
     <AppLayout title="Estado de su Solicitud" description={profile.category ? categoryLabels[profile.category] : "Sin categoría asignada"}>
-      <div className="max-w-2xl">
+      <div className="max-w-2xl space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-xl">Estado Actual</CardTitle>
@@ -61,6 +84,31 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {rejectedDocs && rejectedDocs.length > 0 && (
+          <Card className="border-destructive/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2 text-destructive">
+                <FileWarning className="h-5 w-5" />
+                Documentos con Observaciones
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {rejectedDocs.map((doc, idx) => (
+                <div key={idx} className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
+                  <p className="font-medium text-sm font-sans">
+                    {docLabelMap[doc.document_type] || doc.document_type}
+                  </p>
+                  {doc.rejection_reason && (
+                    <p className="text-sm text-muted-foreground font-sans">
+                      <span className="font-medium text-destructive">Observación:</span> {doc.rejection_reason}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AppLayout>
   );
