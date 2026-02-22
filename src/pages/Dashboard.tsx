@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, CheckCircle2, XCircle, AlertTriangle, FileWarning } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Clock, CheckCircle2, XCircle, AlertTriangle, FileWarning, Upload, Loader2 } from "lucide-react";
 import { categoryLabels, documentMatrixByCategory } from "@/lib/document-matrix";
 import AppLayout from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 const statusConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   pending_verification: { label: "Verificación Pendiente", icon: <Clock className="h-5 w-5" />, color: "bg-warning/10 text-warning" },
@@ -19,13 +22,16 @@ const statusConfig: Record<string, { label: string; icon: React.ReactNode; color
 
 const Dashboard = () => {
   const { profile, user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [uploading, setUploading] = useState<string | null>(null);
 
   const { data: rejectedDocs } = useQuery({
     queryKey: ["rejected-documents", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("document_type, rejection_reason, category")
+        .select("id, document_type, rejection_reason, category")
         .eq("user_id", user!.id)
         .eq("status", "rejected");
       if (error) throw error;
@@ -34,11 +40,49 @@ const Dashboard = () => {
     enabled: !!user?.id,
   });
 
+  const handleReupload = async (docId: string, docType: string, file: File) => {
+    if (!user) return;
+    setUploading(docId);
+
+    try {
+      const maxSize = 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast({ title: "Error", description: "El archivo excede el tamaño máximo de 10MB.", variant: "destructive" });
+        return;
+      }
+
+      const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+      if (!allowedTypes.includes(file.type)) {
+        toast({ title: "Error", description: "Solo se permiten archivos PDF, JPG y PNG.", variant: "destructive" });
+        return;
+      }
+
+      const filePath = `${user.id}/${docType}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage.from("documents").upload(filePath, file);
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("documents").getPublicUrl(filePath);
+
+      await supabase.from("documents").update({
+        file_url: urlData.publicUrl,
+        file_name: file.name,
+        status: "uploaded",
+        rejection_reason: null,
+      }).eq("id", docId);
+
+      toast({ title: "Documento reenviado", description: "Su documento ha sido enviado nuevamente para revisión." });
+      queryClient.invalidateQueries({ queryKey: ["rejected-documents", user.id] });
+    } catch (error: any) {
+      toast({ title: "Error al subir", description: error.message, variant: "destructive" });
+    } finally {
+      setUploading(null);
+    }
+  };
+
   if (!profile) return null;
 
   const status = statusConfig[profile.status] || statusConfig.pending_verification;
 
-  // Build a label map from the document matrix
   const docLabelMap: Record<string, string> = {};
   if (profile.category) {
     const matrix = documentMatrixByCategory[profile.category] || [];
@@ -94,8 +138,8 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {rejectedDocs.map((doc, idx) => (
-                <div key={idx} className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1">
+              {rejectedDocs.map((doc) => (
+                <div key={doc.id} className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-2">
                   <p className="font-medium text-sm font-sans">
                     {docLabelMap[doc.document_type] || doc.document_type}
                   </p>
@@ -104,6 +148,32 @@ const Dashboard = () => {
                       <span className="font-medium text-destructive">Observación:</span> {doc.rejection_reason}
                     </p>
                   )}
+                  <label className="cursor-pointer inline-block">
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleReupload(doc.id, doc.document_type, file);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      disabled={uploading === doc.id}
+                    >
+                      <span>
+                        {uploading === doc.id ? (
+                          <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Subiendo...</>
+                        ) : (
+                          <><Upload className="h-4 w-4 mr-1" /> Reenviar Documento</>
+                        )}
+                      </span>
+                    </Button>
+                  </label>
                 </div>
               ))}
             </CardContent>
