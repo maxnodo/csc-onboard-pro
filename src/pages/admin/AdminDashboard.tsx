@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AdminLayout from "./AdminLayout";
 import { categoryLabels } from "@/lib/document-matrix";
-import { Search, Eye, Users, Clock, CheckCircle2, XCircle, FileSearch } from "lucide-react";
+import { Search, Eye, Users, Clock, CheckCircle2, XCircle, FileSearch, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
@@ -36,12 +36,15 @@ const statusColors: Record<string, string> = {
   active_final: "bg-success/10 text-success",
 };
 
+const PAGE_SIZE = 10;
+
 const AdminDashboard = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -76,6 +79,13 @@ const AdminDashboard = () => {
     }
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginatedPage = Math.min(currentPage, totalPages);
+  const paginated = filtered.slice((paginatedPage - 1) * PAGE_SIZE, paginatedPage * PAGE_SIZE);
+
+  // Reset page when filters change
+  useEffect(() => { setCurrentPage(1); }, [filterStatus, filterCategory, searchTerm]);
 
   const countByStatus = (status: string) => profiles.filter((p) => p.status === status).length;
 
@@ -161,7 +171,7 @@ const AdminDashboard = () => {
               ) : filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No se encontraron solicitudes</TableCell></TableRow>
               ) : (
-                filtered.map((p) => (
+                paginated.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell>
                       <div>
@@ -196,6 +206,34 @@ const AdminDashboard = () => {
               )}
             </TableBody>
           </Table>
+
+          {/* Pagination */}
+          {filtered.length > PAGE_SIZE && (
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <p className="text-sm text-muted-foreground">
+                Mostrando {(paginatedPage - 1) * PAGE_SIZE + 1}–{Math.min(paginatedPage * PAGE_SIZE, filtered.length)} de {filtered.length}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={paginatedPage <= 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-medium">{paginatedPage} / {totalPages}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={paginatedPage >= totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </AdminLayout>
