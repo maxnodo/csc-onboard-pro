@@ -63,6 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const loadUserData = async (userId: string, isSignIn: boolean) => {
+    setLoading(true);
     try {
       if (isSignIn) {
         const { data: currentProfile } = await supabase
@@ -78,8 +79,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             .eq("id", userId);
         }
       }
-      await fetchProfile(userId);
-      await fetchRoles(userId);
+      // Fetch profile and roles in parallel to avoid race conditions
+      await Promise.all([fetchProfile(userId), fetchRoles(userId)]);
     } catch (e) {
       console.error("Error loading user data:", e);
     } finally {
