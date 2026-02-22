@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "@/components/NavLink";
 import {
-  Building2, LayoutDashboard, ShieldCheck, MapPin, LogOut, Home, PanelLeft,
+  Building2, LayoutDashboard, ShieldCheck, MapPin, LogOut, Home, PanelLeft, UserCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 
 const userNavItems = [
   { title: "Mi Solicitud", url: "/dashboard", icon: Home },
+  { title: "Mi Perfil", url: "/profile", icon: UserCircle },
 ];
 
 const adminNavItems = [
