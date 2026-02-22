@@ -1,0 +1,133 @@
+export type DocumentRequirementType = "FILE_UPLOAD" | "FORM_FIELD" | "FORM_GENERATED_FILE_UPLOAD";
+
+export interface DocumentRequirement {
+  key: string;
+  label: string;
+  type: DocumentRequirementType;
+  multiple?: boolean;
+  conditional?: boolean;
+  conditionalLabel?: string;
+}
+
+export interface FormFieldDefinition {
+  key: string;
+  label: string;
+  type: "text" | "email" | "tel" | "textarea" | "date" | "number";
+  required: boolean;
+  placeholder?: string;
+}
+
+function dr(key: string, label: string, type: DocumentRequirementType, opts?: { multiple?: boolean; conditional?: boolean; conditionalLabel?: string }): DocumentRequirement {
+  return { key, label, type, ...opts };
+}
+
+function ff(key: string, label: string, type: FormFieldDefinition["type"], required: boolean, placeholder?: string): FormFieldDefinition {
+  return { key, label, type, required, placeholder };
+}
+
+const gen = (key: string, label: string) => dr(key, label, "FORM_GENERATED_FILE_UPLOAD");
+const file = (key: string, label: string, opts?: { multiple?: boolean; conditional?: boolean; conditionalLabel?: string }) => dr(key, label, "FILE_UPLOAD", opts);
+
+const commonGenerated: DocumentRequirement[] = [
+  gen("hoja_consignacion", "Hoja de Consignación"),
+  gen("carta_solicitud", "Carta de Solicitud"),
+];
+
+export const documentMatrixByCategory: Record<string, DocumentRequirement[]> = {
+  distribuidor: [
+    ...commonGenerated,
+    file("acta_constitutiva", "Acta Constitutiva / Registro Mercantil"),
+    file("declaracion_islr_iva", "Declaración ISLR / IVA"),
+    file("cedula_accionistas", "Cédula de Accionistas"),
+    file("rif_empresa", "RIF Empresa"),
+    file("rif_accionistas", "RIF Accionistas"),
+    file("registro_fotografico", "Registro Fotográfico", { multiple: true }),
+    file("referencias_comerciales", "Referencias Comerciales (3)", { multiple: true }),
+    file("referencia_bancaria", "Referencia Bancaria"),
+  ],
+  constructor: [
+    ...commonGenerated,
+    file("acta_constitutiva", "Acta Constitutiva / Registro Mercantil"),
+    file("declaracion_islr_iva", "Declaración ISLR / IVA"),
+    file("cedula_accionistas", "Cédula de Accionistas"),
+    file("rif_empresa_accionistas", "RIF Empresa y Accionistas"),
+    file("registro_fotografico", "Registro Fotográfico", { multiple: true }),
+    file("memoria_descriptiva", "Memoria Descriptiva"),
+    file("contrato_obra", "Contrato de Obra"),
+    file("referencias_comerciales", "Referencias Comerciales (3)", { multiple: true }),
+    file("referencia_bancaria", "Referencia Bancaria"),
+    file("acta_prorroga", "Acta de Prórroga", { conditional: true, conditionalLabel: "Si aplica" }),
+  ],
+  emprendedor: [
+    ...commonGenerated,
+    file("registro_emprendedor", "Registro de Emprendedor"),
+    file("cedula_identidad", "Cédula de Identidad"),
+    file("rif", "RIF"),
+    file("registro_fotografico", "Registro Fotográfico", { multiple: true }),
+    file("registro_ivss", "Registro IVSS"),
+    file("registro_inces", "Registro INCES"),
+    file("registro_faov", "Registro FAOV"),
+  ],
+  alcaldia: [
+    ...commonGenerated,
+    file("gaceta_oficial", "Gaceta Oficial"),
+    file("nombramiento_autoridad", "Nombramiento de Autoridad"),
+    file("cedula_autoridad", "Cédula de la Autoridad"),
+    file("rif_institucional", "RIF Institucional"),
+    file("carnet_patria", "Carnet de la Patria", { conditional: true, conditionalLabel: "Si requerido" }),
+  ],
+};
+
+export const formFieldsByCategory: Record<string, FormFieldDefinition[]> = {
+  distribuidor: [
+    ff("razon_social", "Razón Social", "text", true),
+    ff("rif", "RIF", "text", true, "J-12345678-9"),
+    ff("direccion_fiscal", "Dirección Fiscal", "textarea", true),
+    ff("representante_legal", "Representante Legal", "text", true),
+    ff("telefono", "Teléfono", "tel", true),
+    ff("correo", "Correo Electrónico", "email", true),
+  ],
+  constructor: [
+    ff("razon_social", "Razón Social", "text", true),
+    ff("rif", "RIF", "text", true, "J-12345678-9"),
+    ff("direccion_fiscal", "Dirección Fiscal", "textarea", true),
+    ff("representante_legal", "Representante Legal", "text", true),
+    ff("telefono", "Teléfono", "tel", true),
+    ff("correo", "Correo Electrónico", "email", true),
+    ff("nombre_obra", "Nombre de la Obra", "text", true),
+    ff("ubicacion_obra", "Ubicación de la Obra", "text", true),
+    ff("monto_estimado", "Monto Estimado", "number", true),
+    ff("fecha_inicio", "Fecha de Inicio", "date", true),
+    ff("fecha_culminacion", "Fecha de Culminación", "date", true),
+  ],
+  emprendedor: [
+    ff("nombre_completo", "Nombre Completo", "text", true),
+    ff("cedula", "Número de Cédula", "text", true),
+    ff("direccion", "Dirección", "textarea", true),
+    ff("telefono", "Teléfono", "tel", true),
+    ff("correo", "Correo Electrónico", "email", true),
+    ff("actividad_economica", "Actividad Económica", "text", true),
+  ],
+  alcaldia: [
+    ff("nombre_ente", "Nombre del Ente", "text", true),
+    ff("estado", "Estado", "text", true),
+    ff("municipio", "Municipio", "text", true),
+    ff("direccion_administrativa", "Dirección Administrativa", "textarea", true),
+    ff("telefono_institucional", "Teléfono Institucional", "tel", true),
+    ff("correo_institucional", "Correo Institucional", "email", true),
+  ],
+};
+
+export const categoryLabels: Record<string, string> = {
+  distribuidor: "Distribuidor / Ferretería / Bloquera / Transformador",
+  constructor: "Constructor",
+  emprendedor: "Emprendedor",
+  alcaldia: "Alcaldía / Gobernación",
+};
+
+export const categoryDescriptions: Record<string, string> = {
+  distribuidor: "Empresas dedicadas a la distribución, venta o transformación de productos de cemento.",
+  constructor: "Empresas constructoras con proyectos de obra activos o planificados.",
+  emprendedor: "Emprendedores individuales con actividad económica relacionada al sector.",
+  alcaldia: "Entes gubernamentales municipales o regionales.",
+};
