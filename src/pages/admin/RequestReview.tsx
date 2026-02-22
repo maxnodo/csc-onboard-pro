@@ -84,10 +84,15 @@ const RequestReview = () => {
     const urls: Record<string, string> = {};
     for (const doc of docs) {
       if (doc.file_url) {
-        // file_url might be a full public URL or a storage path
-        const path = doc.file_url.includes("/storage/v1/")
-          ? doc.file_url.split("/object/public/documents/")[1] || doc.file_url
-          : doc.file_url;
+        let path = doc.file_url;
+        // Handle full public URLs
+        if (path.includes("/storage/v1/")) {
+          path = path.split("/object/public/documents/")[1] || path;
+        }
+        // Strip leading "documents/" prefix (old format stored bucket name in path)
+        if (path.startsWith("documents/")) {
+          path = path.substring("documents/".length);
+        }
         const { data } = await supabase.storage.from("documents").createSignedUrl(path, 3600);
         if (data?.signedUrl) urls[doc.id] = data.signedUrl;
       }
