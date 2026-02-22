@@ -71,15 +71,6 @@ const Auth = () => {
               <p className="text-sm opacity-80 font-sans">Corporación Socialista de Cemento</p>
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-4">Sistema de Onboarding Documental</h2>
-          <p className="text-base opacity-90 font-sans leading-relaxed">
-            Plataforma institucional para el registro, carga documental y validación de usuarios autorizados de la Corporación Socialista de Cemento.
-          </p>
-          <div className="mt-10 space-y-3 font-sans text-sm opacity-80">
-            <div className="flex items-center gap-2"><ArrowRight className="h-4 w-4" /> Registro y verificación de identidad</div>
-            <div className="flex items-center gap-2"><ArrowRight className="h-4 w-4" /> Carga documental por categoría</div>
-            <div className="flex items-center gap-2"><ArrowRight className="h-4 w-4" /> Validación administrativa multi-sede</div>
-          </div>
         </div>
       </div>
 
