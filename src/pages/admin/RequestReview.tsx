@@ -14,7 +14,7 @@ import AdminLayout from "./AdminLayout";
 import { categoryLabels } from "@/lib/document-matrix";
 import {
   ArrowLeft, CheckCircle2, XCircle, FileText,
-  ExternalLink, MapPin, User, Mail, Phone,
+  ExternalLink, MapPin, User, Mail, Phone, Eye,
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -58,6 +58,7 @@ const RequestReview = () => {
   const [docActionId, setDocActionId] = useState<string | null>(null);
   const [docRejectReason, setDocRejectReason] = useState("");
   const [showDocReject, setShowDocReject] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<{ name: string; url: string } | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -274,10 +275,13 @@ const RequestReview = () => {
                           </Badge>
 
                           {signedUrls[doc.id] && (
-                            <Button variant="ghost" size="sm" asChild>
-                              <a href={signedUrls[doc.id]} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setPreviewDoc({ name: doc.document_type.replace(/_/g, " "), url: signedUrls[doc.id] })}
+                              title="Ver documento"
+                            >
+                              <Eye className="h-4 w-4" />
                             </Button>
                           )}
 
@@ -310,6 +314,31 @@ const RequestReview = () => {
           </Card>
         </div>
       </div>
+
+      {/* Document Preview Dialog */}
+      <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="capitalize font-sans">{previewDoc?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0">
+            {previewDoc && (
+              <iframe
+                src={previewDoc.url}
+                className="w-full h-full rounded-lg border"
+                title={previewDoc.name}
+              />
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" asChild>
+              <a href={previewDoc?.url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4 mr-2" /> Abrir en nueva pestaña
+              </a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Reject Document Dialog */}
       <Dialog open={showDocReject} onOpenChange={setShowDocReject}>
