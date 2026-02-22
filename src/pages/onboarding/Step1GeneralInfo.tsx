@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { formFieldsByCategory, categoryLabels } from "@/lib/document-matrix";
+import ProfileImageUpload from "@/components/ProfileImageUpload";
 import OnboardingLayout from "./OnboardingLayout";
 import { Save, ArrowRight } from "lucide-react";
 
@@ -17,6 +18,7 @@ const Step1GeneralInfo = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const category = profile?.category;
@@ -34,8 +36,13 @@ const Step1GeneralInfo = () => {
       .then(({ data }) => {
         if (data?.form_data && typeof data.form_data === "object" && !Array.isArray(data.form_data)) {
           const loaded: Record<string, string> = {};
-          for (const [k, v] of Object.entries(data.form_data as Record<string, unknown>)) {
-            loaded[k] = String(v ?? "");
+          const fd = data.form_data as Record<string, unknown>;
+          for (const [k, v] of Object.entries(fd)) {
+            if (k === "_profile_image_url") {
+              setProfileImageUrl(String(v ?? ""));
+            } else {
+              loaded[k] = String(v ?? "");
+            }
           }
           setFormValues(loaded);
         }
@@ -50,6 +57,8 @@ const Step1GeneralInfo = () => {
     if (!user || !category) return;
     setSaving(true);
 
+    const dataToSave = { ...formValues, ...(profileImageUrl ? { _profile_image_url: profileImageUrl } : {}) };
+
     const { data: existing } = await supabase
       .from("form_data")
       .select("id")
@@ -58,9 +67,9 @@ const Step1GeneralInfo = () => {
       .maybeSingle();
 
     if (existing) {
-      await supabase.from("form_data").update({ form_data: formValues }).eq("id", existing.id);
+      await supabase.from("form_data").update({ form_data: dataToSave }).eq("id", existing.id);
     } else {
-      await supabase.from("form_data").insert({ user_id: user.id, category, form_data: formValues });
+      await supabase.from("form_data").insert({ user_id: user.id, category, form_data: dataToSave });
     }
 
     toast({ title: "Guardado", description: "Progreso guardado exitosamente." });
@@ -97,6 +106,13 @@ const Step1GeneralInfo = () => {
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ProfileImageUpload
+              userId={user!.id}
+              currentImageUrl={profileImageUrl}
+              onImageUploaded={(url) => setProfileImageUrl(url)}
+              onImageRemoved={() => setProfileImageUrl(null)}
+              isCompany={category !== "emprendedor"}
+            />
             {fields.map((field) => (
               <div key={field.key} className={field.type === "textarea" ? "md:col-span-2" : ""}>
                 <Label htmlFor={field.key} className="font-sans text-sm">
