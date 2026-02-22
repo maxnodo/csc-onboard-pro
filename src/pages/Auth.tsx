@@ -87,20 +87,6 @@ const Auth = () => {
               Plataforma integral para el registro carga documental y validación de distribuidores constructores emprendedores e instituciones públicas
             </p>
 
-            <div className="space-y-4 pt-4">
-              <div className="flex items-start gap-3">
-                <div className="mt-1 h-2 w-2 rounded-full bg-primary-foreground/50 shrink-0" />
-                <p className="text-sm text-primary-foreground/60 font-sans">Registro rápido y seguro con verificación de identidad</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="mt-1 h-2 w-2 rounded-full bg-primary-foreground/50 shrink-0" />
-                <p className="text-sm text-primary-foreground/60 font-sans">Carga documental guiada según su categoría</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="mt-1 h-2 w-2 rounded-full bg-primary-foreground/50 shrink-0" />
-                <p className="text-sm text-primary-foreground/60 font-sans">Seguimiento en tiempo real del estado de su solicitud</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
