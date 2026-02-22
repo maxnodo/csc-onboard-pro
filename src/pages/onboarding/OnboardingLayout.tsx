@@ -1,7 +1,10 @@
 import { ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Progress } from "@/components/ui/progress";
-import { Building2, CheckCircle2 } from "lucide-react";
+import { Building2, CheckCircle2, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface OnboardingLayoutProps {
@@ -20,6 +23,13 @@ const steps = [
 const OnboardingLayout = ({ children, currentStep, title, description }: OnboardingLayoutProps) => {
   const progressPercent = ((currentStep - 1) / 3) * 100 + (currentStep <= 3 ? 33.3 * 0.5 : 0);
 
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
@@ -31,8 +41,13 @@ const OnboardingLayout = ({ children, currentStep, title, description }: Onboard
               <p className="text-xs text-muted-foreground">Onboarding Documental</p>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-1 text-sm text-muted-foreground font-sans">
-            Progreso: {Math.round(progressPercent)}%
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center text-sm text-muted-foreground font-sans">
+              Progreso: {Math.round(progressPercent)}%
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
+              <LogOut className="h-4 w-4 mr-1" /> Salir
+            </Button>
           </div>
         </div>
         <div className="container mx-auto px-6 pb-4">
