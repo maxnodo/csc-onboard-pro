@@ -72,6 +72,17 @@ const Step2Documentation = () => {
         const existingDoc = documents.find((d) => d.document_type === docType);
 
         if (existingDoc && !req?.multiple) {
+          // Delete old file from storage
+          if (existingDoc.file_url) {
+            let oldPath = existingDoc.file_url;
+            if (oldPath.includes("/storage/v1/")) {
+              oldPath = oldPath.split("/object/public/documents/")[1] || oldPath;
+            }
+            if (oldPath.startsWith("documents/")) {
+              oldPath = oldPath.substring("documents/".length);
+            }
+            await supabase.storage.from("documents").remove([oldPath]);
+          }
           await supabase.from("documents").update({
             file_url: filePath,
             file_name: file.name,
