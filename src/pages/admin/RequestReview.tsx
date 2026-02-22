@@ -288,16 +288,23 @@ const RequestReview = () => {
                           )}
 
                           {doc.status === "approved" ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                            <Button size="sm" variant="outline" className="border-green-500 bg-green-50 text-green-600 pointer-events-none">
+                              <CheckCircle2 className="h-3 w-3" />
+                            </Button>
                           ) : (doc.status === "uploaded" || doc.status === "under_review") ? (
-                            <>
-                              <Button size="sm" variant="outline" onClick={() => handleApproveDoc(doc.id)}>
-                                <CheckCircle2 className="h-3 w-3" />
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => { setDocActionId(doc.id); setShowDocReject(true); }}>
-                                <XCircle className="h-3 w-3" />
-                              </Button>
-                            </>
+                            <Button size="sm" variant="outline" onClick={() => handleApproveDoc(doc.id)}>
+                              <CheckCircle2 className="h-3 w-3" />
+                            </Button>
+                          ) : null}
+
+                          {doc.status === "rejected" ? (
+                            <Button size="sm" variant="outline" className="border-red-500 bg-red-50 text-red-600 pointer-events-none">
+                              <XCircle className="h-3 w-3" />
+                            </Button>
+                          ) : (doc.status === "uploaded" || doc.status === "under_review") ? (
+                            <Button size="sm" variant="outline" onClick={() => { setDocActionId(doc.id); setShowDocReject(true); }}>
+                              <XCircle className="h-3 w-3" />
+                            </Button>
                           ) : null}
                         </div>
                       </div>
