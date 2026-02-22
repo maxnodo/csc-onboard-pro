@@ -1,9 +1,8 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Building2, LogOut, Clock, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { categoryLabels } from "@/lib/document-matrix";
+import AppLayout from "@/components/AppLayout";
 
 const statusConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   pending_verification: { label: "Verificación Pendiente", icon: <Clock className="h-5 w-5" />, color: "bg-warning/10 text-warning" },
@@ -17,36 +16,18 @@ const statusConfig: Record<string, { label: string; icon: React.ReactNode; color
 };
 
 const Dashboard = () => {
-  const { profile, signOut } = useAuth();
+  const { profile } = useAuth();
 
   if (!profile) return null;
 
   const status = statusConfig[profile.status] || statusConfig.pending_verification;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Building2 className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-xl font-bold text-primary font-sans">CSC</h1>
-              <p className="text-xs text-muted-foreground">Sistema de Onboarding Documental</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" /> Cerrar Sesión
-          </Button>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-6 py-12 max-w-2xl">
+    <AppLayout title="Estado de su Solicitud" description={profile.category ? categoryLabels[profile.category] : "Sin categoría asignada"}>
+      <div className="max-w-2xl">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Estado de su Solicitud</CardTitle>
-            <CardDescription>
-              {profile.category ? categoryLabels[profile.category] : "Sin categoría asignada"}
-            </CardDescription>
+            <CardTitle className="text-xl">Estado Actual</CardTitle>
           </CardHeader>
           <CardContent>
             <div className={`flex items-center gap-3 p-4 rounded-lg ${status.color}`}>
@@ -80,8 +61,8 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 
