@@ -1,95 +1,59 @@
 
+# Aprobacion Automatica de Documentacion y Notificacion por Correo
 
-# Sistema de Onboarding Documental – CSC
-## Corporación Socialista de Cemento
+## Problema actual
+- Existen botones manuales "Aprobar Documentacion" y "Rechazar Solicitud" que no deberian estar
+- La aprobacion de la documentacion completa debe ser automatica cuando el 100% de los documentos individuales estan aprobados
 
-Sistema multi-fase para registro, carga documental, validación administrativa y aprobación presencial de usuarios.
+## Solucion propuesta
 
----
+### 1. Eliminar botones manuales de la UI
+- Remover la tarjeta "Acciones" con los botones "Aprobar Documentacion" y "Rechazar Solicitud"
+- Remover los dialogos asociados (Approve Dialog y Reject Request Dialog)
+- Remover el estado y funciones relacionadas: `showApprove`, `selectedSede`, `showReject`, `rejectReason`, `handleApproveRequest`, `handleRejectRequest`
 
-## FASE 1 – Registro, Onboarding y Carga Documental
+### 2. Auto-aprobacion al aprobar documentos individuales
+- Despues de aprobar un documento individual (`handleApproveDoc`), verificar si TODOS los documentos del usuario ya estan aprobados
+- Si el 100% esta aprobado, actualizar automaticamente el perfil a `approved_documentation`
+- Mostrar un toast informando que la documentacion fue aprobada automaticamente
 
-### 1.1 Autenticación y Registro
-- Registro con email y contraseña
-- Verificación de email obligatoria
-- Estado inicial `pending_verification` → `onboarding_started` al verificar
-- Diseño institucional con paleta corporativa (tonos industriales/formales, placeholder por ahora)
+**Nota sobre la sede**: Actualmente la aprobacion manual requiere asignar una sede. Con la auto-aprobacion, la sede se asignaria en el paso del aprobador presencial (Panel del Aprobador), que ya existe en el sistema. Por lo tanto no se necesita asignar sede en este paso.
 
-### 1.2 Selección de Categoría
-- Pantalla de selección entre las 4 categorías: Distribuidor/Ferretería/Bloquera/Transformador, Constructor, Emprendedor, Alcaldía/Gobernación
-- Al seleccionar, se genera dinámicamente la matriz documental correspondiente con los 3 tipos: FILE_UPLOAD, FORM_FIELD, FORM_GENERATED + FILE_UPLOAD
+### 3. Notificacion por correo electronico
+- Crear una nueva edge function `notify-documentation-approved` que envie un correo al usuario cuando su documentacion es aprobada
+- El correo indicara que la documentacion fue aprobada y que debe acercarse a la sucursal
+- Crear un template de correo React Email con el estilo CSC existente
+- La edge function se invocara desde el frontend despues de la auto-aprobacion
 
-### 1.3 Onboarding por Etapas (3 pasos)
-- **Etapa 1 – Información General**: formulario estructurado según categoría (Razón Social, RIF, dirección, representante legal, etc.) con guardado automático
-- **Etapa 2 – Documentación**: carga de archivos (PDF/JPG/PNG), soporte de múltiples archivos donde aplique, indicador de estado por documento (Pendiente/Subido), validación de tipo y tamaño
-- **Etapa 3 – Declaraciones y Confirmación**: aceptación de términos, declaración jurada, confirmación final → estado `under_review`
-- Barra de progreso visual por porcentaje en todo el proceso
+### 4. Barra de progreso visual
+- Agregar un indicador de progreso en la seccion de documentos que muestre cuantos documentos estan aprobados vs total
+- Ejemplo: "5/8 documentos aprobados" con una barra de progreso
 
-### 1.4 Generación de Documentos
-- Generación automática de Hoja de Consignación y Carta de Solicitud con formato profesional base
-- El usuario descarga, firma y re-sube el documento firmado
+## Detalles tecnicos
 
-### 1.5 Base de Datos
-- Tablas: usuarios (con perfil), sedes, documentos, formularios, roles
-- Almacenamiento de archivos en Supabase Storage
-- Matriz documental configurable por categoría
-- Tabla de sedes con datos iniciales (10 plantas)
+### Cambios en `RequestReview.tsx`
+- Eliminar: tarjeta "Acciones", dialogos de aprobacion/rechazo de solicitud, estados y handlers relacionados
+- Modificar `handleApproveDoc` para verificar si todos los documentos quedan aprobados tras la accion
+- Si todos aprobados: actualizar perfil a `approved_documentation` y llamar a la edge function de notificacion
+- Agregar barra de progreso con conteo de aprobados
 
----
+### Nueva edge function: `notify-documentation-approved`
+```
+supabase/functions/notify-documentation-approved/index.ts
+```
+- Recibe `userId`, `email`, `fullName` en el body
+- Usa Resend (via LOVABLE_API_KEY y sendLovableEmail) con el dominio ya configurado `notify.csc.otronodo.com`
+- Envia correo con template indicando aprobacion y que debe acercarse a la sucursal
 
-## FASE 2 – Panel Administrativo
+### Nuevo template de correo
+```
+supabase/functions/_shared/email-templates/documentation-approved.tsx
+```
+- Estilo consistente con los templates existentes (colores CSC, tipografia)
+- Contenido: "Su documentacion ha sido aprobada. Debe acercarse a la sucursal mas cercana para completar el proceso"
 
-### 2.1 Dashboard Admin
-- Vista de solicitudes por categoría y filtros por estado
-- Revisión individual de documentos con visor integrado
-- Aprobar/Rechazar documentos con motivo obligatorio
-- Historial de decisiones por solicitud
-
-### 2.2 Gestión de Estados
-- Cambio de estado: `under_review` → `approved_documentation` o `rejected`
-- Asignación obligatoria de sede al aprobar (selección entre sedes autorizadas para el admin)
-- Bloqueo de activación si `sede_id` es NULL
-- Notificaciones por email al usuario ante cambios de estado
-
-### 2.3 Gestión de Sedes
-- CRUD de sedes (activar/desactivar)
-- Cambio de sede post-activación con historial de auditoría obligatorio (admin_id, sede anterior, nueva sede, motivo, fecha)
-- Notificación por email al usuario cuando su sede cambia
-
-### 2.4 Roles y Permisos
-- Sistema de roles: USER, ADMIN, APPROVER, SUPERADMIN
-- ADMIN limitado a sedes autorizadas (excepto SUPERADMIN)
-- Tabla de relación many-to-many entre admins/aprobadores y sedes
-
----
-
-## FASE 3 – Aprobador Presencial y Automatizaciones
-
-### 3.1 Panel del Aprobador
-- Vista de usuarios en estado `approved_documentation` asignados a sus sedes autorizadas
-- Verificación presencial: confirmar identidad, firma de Términos y Condiciones
-- Activación final → estado `active_final`
-- Rechazo presencial con motivo obligatorio y opción de devolver a revisión documental
-- Email automático al usuario según resultado
-
-### 3.2 Vencimiento Automático
-- Vigencia de 30 días para `approved_documentation`
-- Cambio automático a `expired_documentation` al vencer (sin eliminar documentos)
-- Notificación por email al usuario
-- Opción de reactivación manual por ADMIN sin nueva carga documental
-
-### 3.3 Emails Transaccionales
-- Notificaciones en cada cambio de estado con tono formal/institucional
-- Branding CSC en todos los correos
-- Templates para: verificación, aprobación documental, rechazo, activación final, cambio de sede, vencimiento
-
----
-
-## Diseño y UX
-- Interfaz profesional, institucional y corporativa
-- Desktop prioritario, adaptable a tablet
-- Colores sobrios/industriales (placeholders, reemplazables por branding real)
-- Formularios claros y bien espaciados
-- Estados visuales diferenciados con colores y badges
-- Tono formal en todos los mensajes y notificaciones
-
+### Flujo completo
+1. Admin aprueba documento individual (check verde)
+2. Sistema verifica: todos los documentos aprobados?
+3. Si: actualiza perfil a `approved_documentation`, envia correo, muestra toast
+4. No: continua revision normal
