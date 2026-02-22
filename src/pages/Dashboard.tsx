@@ -110,22 +110,6 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="mt-6 space-y-3 text-sm font-sans">
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Correo</span>
-                <span>{profile.email}</span>
-              </div>
-              {profile.full_name && (
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Nombre</span>
-                  <span>{profile.full_name}</span>
-                </div>
-              )}
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Categoría</span>
-                <span>{profile.category ? categoryLabels[profile.category] : "—"}</span>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
