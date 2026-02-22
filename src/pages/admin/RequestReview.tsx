@@ -52,6 +52,7 @@ const RequestReview = () => {
   const [formData, setFormData] = useState<Record<string, unknown> | null>(null);
   const [sedes, setSedes] = useState<Sede[]>([]);
   const [loading, setLoading] = useState(true);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
 
   // Doc reject dialog
   const [docActionId, setDocActionId] = useState<string | null>(null);
@@ -72,11 +73,26 @@ const RequestReview = () => {
       supabase.from("sedes").select("*").eq("activa", true).order("nombre"),
     ]);
     setProfile(profileRes.data);
-    setDocuments(docsRes.data || []);
+    const docs = docsRes.data || [];
+    setDocuments(docs);
     if (formRes.data?.form_data && typeof formRes.data.form_data === "object" && !Array.isArray(formRes.data.form_data)) {
       setFormData(formRes.data.form_data as Record<string, unknown>);
     }
     setSedes(sedesRes.data || []);
+
+    // Generate signed URLs for all documents with file_url
+    const urls: Record<string, string> = {};
+    for (const doc of docs) {
+      if (doc.file_url) {
+        // file_url might be a full public URL or a storage path
+        const path = doc.file_url.includes("/storage/v1/")
+          ? doc.file_url.split("/object/public/documents/")[1] || doc.file_url
+          : doc.file_url;
+        const { data } = await supabase.storage.from("documents").createSignedUrl(path, 3600);
+        if (data?.signedUrl) urls[doc.id] = data.signedUrl;
+      }
+    }
+    setSignedUrls(urls);
     setLoading(false);
   };
 
@@ -252,9 +268,9 @@ const RequestReview = () => {
                             {st.label}
                           </Badge>
 
-                          {doc.file_url && (
+                          {signedUrls[doc.id] && (
                             <Button variant="ghost" size="sm" asChild>
-                              <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
+                              <a href={signedUrls[doc.id]} target="_blank" rel="noopener noreferrer">
                                 <ExternalLink className="h-4 w-4" />
                               </a>
                             </Button>

@@ -67,15 +67,13 @@ const Step2Documentation = () => {
         const { error: uploadError } = await supabase.storage.from("documents").upload(filePath, file);
         if (uploadError) throw uploadError;
 
-        const { data: urlData } = supabase.storage.from("documents").getPublicUrl(filePath);
-
         // Check if document record exists for this type (non-multiple)
         const req = requirements.find((r) => r.key === docType);
         const existingDoc = documents.find((d) => d.document_type === docType);
 
         if (existingDoc && !req?.multiple) {
           await supabase.from("documents").update({
-            file_url: urlData.publicUrl,
+            file_url: filePath,
             file_name: file.name,
             status: "uploaded",
           }).eq("id", existingDoc.id);
@@ -83,7 +81,7 @@ const Step2Documentation = () => {
           await supabase.from("documents").insert({
             user_id: user.id,
             document_type: docType,
-            file_url: urlData.publicUrl,
+            file_url: filePath,
             file_name: file.name,
             status: "uploaded",
             category,

@@ -76,10 +76,8 @@ const Dashboard = () => {
       const { error: uploadError } = await supabase.storage.from("documents").upload(filePath, file);
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from("documents").getPublicUrl(filePath);
-
       await supabase.from("documents").update({
-        file_url: urlData.publicUrl,
+        file_url: filePath,
         file_name: file.name,
         status: "uploaded",
         rejection_reason: null,
