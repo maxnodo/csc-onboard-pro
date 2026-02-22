@@ -13,6 +13,7 @@ import Step3Confirmation from "./pages/onboarding/Step3Confirmation";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import RequestReview from "./pages/admin/RequestReview";
 import SedeManagement from "./pages/admin/SedeManagement";
+import ApproverPanel from "./pages/admin/ApproverPanel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +74,7 @@ const AppRoutes = () => (
     {/* Admin routes */}
     <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
     <Route path="/admin/request/:id" element={<AdminRoute><RequestReview /></AdminRoute>} />
+    <Route path="/admin/approver" element={<AdminRoute><ApproverPanel /></AdminRoute>} />
     <Route path="/admin/sedes" element={<AdminRoute><SedeManagement /></AdminRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
