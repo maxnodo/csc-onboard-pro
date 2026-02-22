@@ -69,22 +69,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          if (event === "SIGNED_IN" && session.user.email_confirmed_at) {
-            const { data: currentProfile } = await supabase
-              .from("profiles")
-              .select("status")
-              .eq("id", session.user.id)
-              .single();
-
-            if (currentProfile?.status === "pending_verification") {
-              await supabase
+          try {
+            if (event === "SIGNED_IN" && session.user.email_confirmed_at) {
+              const { data: currentProfile } = await supabase
                 .from("profiles")
-                .update({ status: "onboarding_started" })
-                .eq("id", session.user.id);
+                .select("status")
+                .eq("id", session.user.id)
+                .single();
+
+              if (currentProfile?.status === "pending_verification") {
+                await supabase
+                  .from("profiles")
+                  .update({ status: "onboarding_started" })
+                  .eq("id", session.user.id);
+              }
             }
+            await fetchProfile(session.user.id);
+            await fetchRoles(session.user.id);
+          } catch (e) {
+            console.error("Error loading user data:", e);
           }
-          await fetchProfile(session.user.id);
-          await fetchRoles(session.user.id);
         } else {
           setProfile(null);
           setRoles([]);
@@ -93,12 +97,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
-        fetchRoles(session.user.id);
+        try {
+          await fetchProfile(session.user.id);
+          await fetchRoles(session.user.id);
+        } catch (e) {
+          console.error("Error loading user data:", e);
+        }
       }
       setLoading(false);
     });
