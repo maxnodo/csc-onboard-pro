@@ -84,7 +84,7 @@ const Auth = () => {
               Sistema de Registro y<br />Onboarding Documental
             </h2>
             <p className="text-primary-foreground/70 leading-relaxed font-sans">
-              Plataforma integral para el registro, carga documental y validación de distribuidores, constructores, emprendedores e instituciones públicas.
+              Plataforma integral para el registro carga documental y validación de distribuidores constructores emprendedores e instituciones públicas
             </p>
 
             <div className="space-y-4 pt-4">
