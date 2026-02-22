@@ -7,14 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "./AdminLayout";
 import { categoryLabels } from "@/lib/document-matrix";
 import {
-  ArrowLeft, CheckCircle2, XCircle, FileText, Clock,
-  Download, ExternalLink, MapPin, User, Mail, Phone,
+  ArrowLeft, CheckCircle2, XCircle, FileText,
+  ExternalLink, MapPin, User, Mail, Phone,
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -53,15 +53,7 @@ const RequestReview = () => {
   const [sedes, setSedes] = useState<Sede[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Approve dialog
-  const [showApprove, setShowApprove] = useState(false);
-  const [selectedSede, setSelectedSede] = useState<string>("");
-
-  // Reject dialog
-  const [showReject, setShowReject] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
-
-  // Doc action
+  // Doc reject dialog
   const [docActionId, setDocActionId] = useState<string | null>(null);
   const [docRejectReason, setDocRejectReason] = useState("");
   const [showDocReject, setShowDocReject] = useState(false);
@@ -91,6 +83,36 @@ const RequestReview = () => {
   const handleApproveDoc = async (docId: string) => {
     await supabase.from("documents").update({ status: "approved" }).eq("id", docId);
     toast({ title: "Documento aprobado" });
+
+    // Check if all documents are now approved
+    const updatedDocs = documents.map((d) => d.id === docId ? { ...d, status: "approved" as const } : d);
+    const allApproved = updatedDocs.length > 0 && updatedDocs.every((d) => d.status === "approved");
+
+    if (allApproved && profile) {
+      // Auto-approve documentation
+      await supabase.from("profiles").update({
+        status: "approved_documentation",
+        approved_documentation_at: new Date().toISOString(),
+      }).eq("id", id!);
+
+      toast({
+        title: "¡Documentación aprobada automáticamente!",
+        description: "Todos los documentos fueron aprobados. Se notificará al usuario por correo.",
+      });
+
+      // Send notification email
+      try {
+        await supabase.functions.invoke("notify-documentation-approved", {
+          body: {
+            email: profile.email,
+            fullName: profile.full_name || "Usuario",
+          },
+        });
+      } catch (err) {
+        console.error("Error sending notification email:", err);
+      }
+    }
+
     loadData();
   };
 
@@ -107,49 +129,6 @@ const RequestReview = () => {
     loadData();
   };
 
-  const handleApproveRequest = async () => {
-    if (!selectedSede) {
-      toast({ title: "Error", description: "Debe asignar una sede antes de aprobar.", variant: "destructive" });
-      return;
-    }
-
-    const { error } = await supabase.from("profiles").update({
-      status: "approved_documentation",
-      sede_id: selectedSede,
-      approved_documentation_at: new Date().toISOString(),
-    }).eq("id", id!);
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return;
-    }
-
-    // Log sede assignment
-    await supabase.from("sede_change_history").insert({
-      user_id: id!,
-      admin_id: user!.id,
-      nueva_sede_id: selectedSede,
-      motivo: "Asignación inicial al aprobar documentación",
-    });
-
-    toast({ title: "Solicitud aprobada", description: "La documentación ha sido aprobada y la sede asignada." });
-    setShowApprove(false);
-    loadData();
-  };
-
-  const handleRejectRequest = async () => {
-    if (!rejectReason.trim()) {
-      toast({ title: "Error", description: "Debe indicar el motivo del rechazo.", variant: "destructive" });
-      return;
-    }
-
-    await supabase.from("profiles").update({ status: "rejected" }).eq("id", id!);
-    toast({ title: "Solicitud rechazada" });
-    setShowReject(false);
-    setRejectReason("");
-    loadData();
-  };
-
   if (loading || !profile) {
     return (
       <AdminLayout title="Cargando..." description="">
@@ -159,6 +138,8 @@ const RequestReview = () => {
   }
 
   const assignedSede = sedes.find((s) => s.id === profile.sede_id);
+  const approvedCount = documents.filter((d) => d.status === "approved").length;
+  const progressPercent = documents.length > 0 ? (approvedCount / documents.length) * 100 : 0;
 
   return (
     <AdminLayout
@@ -222,23 +203,6 @@ const RequestReview = () => {
               </CardContent>
             </Card>
           )}
-
-          {/* Actions */}
-          {profile.status === "under_review" && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-sans">Acciones</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button className="w-full" onClick={() => setShowApprove(true)}>
-                  <CheckCircle2 className="h-4 w-4 mr-2" /> Aprobar Documentación
-                </Button>
-                <Button variant="destructive" className="w-full" onClick={() => setShowReject(true)}>
-                  <XCircle className="h-4 w-4 mr-2" /> Rechazar Solicitud
-                </Button>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         {/* Right: Documents */}
@@ -249,6 +213,15 @@ const RequestReview = () => {
                 <FileText className="h-5 w-5" /> Documentos ({documents.length})
               </CardTitle>
               <CardDescription>Revise cada documento individualmente</CardDescription>
+              {documents.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{approvedCount}/{documents.length} documentos aprobados</span>
+                    <span className="font-medium">{Math.round(progressPercent)}%</span>
+                  </div>
+                  <Progress value={progressPercent} className="h-2" />
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               {documents.length === 0 ? (
@@ -316,61 +289,6 @@ const RequestReview = () => {
           </Card>
         </div>
       </div>
-
-      {/* Approve Dialog */}
-      <Dialog open={showApprove} onOpenChange={setShowApprove}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Aprobar Documentación</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label className="font-sans">Asignar Sede *</Label>
-              <Select value={selectedSede} onValueChange={setSelectedSede}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Seleccione una sede" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sedes.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.nombre} – {s.estado_ubicacion}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground mt-1">La sede es obligatoria para activar al usuario.</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowApprove(false)}>Cancelar</Button>
-            <Button onClick={handleApproveRequest} disabled={!selectedSede}>Aprobar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Reject Request Dialog */}
-      <Dialog open={showReject} onOpenChange={setShowReject}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rechazar Solicitud</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Label className="font-sans">Motivo del Rechazo *</Label>
-            <Textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Indique el motivo del rechazo..."
-              className="mt-1"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowReject(false)}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleRejectRequest} disabled={!rejectReason.trim()}>
-              Rechazar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Reject Document Dialog */}
       <Dialog open={showDocReject} onOpenChange={setShowDocReject}>
