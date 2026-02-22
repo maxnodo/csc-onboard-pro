@@ -287,11 +287,9 @@ const RequestReview = () => {
                             </Button>
                           )}
 
-                          {doc.status === "approved" && (
+                          {doc.status === "approved" ? (
                             <CheckCircle2 className="h-5 w-5 text-green-600" />
-                          )}
-
-                          {(doc.status === "uploaded" || doc.status === "under_review") && (
+                          ) : (doc.status === "uploaded" || doc.status === "under_review") ? (
                             <>
                               <Button size="sm" variant="outline" onClick={() => handleApproveDoc(doc.id)}>
                                 <CheckCircle2 className="h-3 w-3" />
@@ -300,7 +298,7 @@ const RequestReview = () => {
                                 <XCircle className="h-3 w-3" />
                               </Button>
                             </>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     );
