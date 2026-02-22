@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import AdminLayout from "./AdminLayout";
 import { categoryLabels } from "@/lib/document-matrix";
 import { Search, Eye, Users, Clock, CheckCircle2, XCircle, FileSearch, ChevronLeft, ChevronRight } from "lucide-react";
@@ -40,6 +41,7 @@ const PAGE_SIZE = 10;
 
 const AdminDashboard = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profileImages, setProfileImages] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -54,15 +56,25 @@ const AdminDashboard = () => {
   const loadProfiles = async () => {
     setLoading(true);
     
-    // Load profiles and admin role user IDs in parallel
-    const [profilesRes, rolesRes] = await Promise.all([
+    const [profilesRes, rolesRes, formDataRes] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id").in("role", ["admin", "superadmin", "approver"]),
+      supabase.from("form_data").select("user_id, form_data"),
     ]);
 
     const adminUserIds = new Set((rolesRes.data || []).map((r) => r.user_id));
     const nonAdminProfiles = (profilesRes.data || []).filter((p) => !adminUserIds.has(p.id));
 
+    // Build image map from form_data
+    const imgMap: Record<string, string> = {};
+    (formDataRes.data || []).forEach((fd) => {
+      const data = fd.form_data as Record<string, unknown> | null;
+      if (data && typeof data === "object" && typeof data._profile_image_url === "string") {
+        imgMap[fd.user_id] = data._profile_image_url;
+      }
+    });
+
+    setProfileImages(imgMap);
     setProfiles(nonAdminProfiles);
     setLoading(false);
   };
@@ -174,9 +186,22 @@ const AdminDashboard = () => {
                 paginated.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell>
-                      <div>
-                        <p className="font-medium font-sans text-sm">{p.full_name || "Sin nombre"}</p>
-                        <p className="text-xs text-muted-foreground">{p.email}</p>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          {profileImages[p.id] && <AvatarImage src={profileImages[p.id]} alt={p.full_name || ""} />}
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                            {(p.full_name || "")
+                              .split(" ")
+                              .filter(Boolean)
+                              .map((w) => w[0].toUpperCase())
+                              .slice(0, 2)
+                              .join("") || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium font-sans text-sm">{p.full_name || "Sin nombre"}</p>
+                          <p className="text-xs text-muted-foreground">{p.email}</p>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
