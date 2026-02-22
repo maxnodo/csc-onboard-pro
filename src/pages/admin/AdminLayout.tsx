@@ -22,6 +22,12 @@ interface AdminLayoutProps {
 const AdminLayout = ({ children, title, description }: AdminLayoutProps) => {
   const { signOut, profile } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -56,7 +62,7 @@ const AdminLayout = ({ children, title, description }: AdminLayoutProps) => {
           <div className="px-3 py-2 text-xs text-muted-foreground font-sans mb-2 truncate">
             {profile?.email}
           </div>
-          <Button variant="ghost" size="sm" className="w-full justify-start" onClick={signOut}>
+          <Button variant="ghost" size="sm" className="w-full justify-start" onClick={handleSignOut}>
             <LogOut className="h-4 w-4 mr-2" /> Cerrar Sesión
           </Button>
         </div>
