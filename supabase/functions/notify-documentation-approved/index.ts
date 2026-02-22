@@ -1,4 +1,5 @@
 import React from 'npm:react@18.3.1'
+import { Resend } from 'npm:resend@4.0.0'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { DocumentationApprovedEmail } from '../_shared/email-templates/documentation-approved.tsx'
 
@@ -23,29 +24,23 @@ Deno.serve(async (req) => {
       React.createElement(DocumentationApprovedEmail, { fullName })
     )
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured')
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+    if (!RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY not configured')
     }
 
-    const emailRes = await fetch('https://email.gateway.lovable.dev/v1/send', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Corporación Socialista de Cemento <no-reply@notify.csc.otronodo.com>',
-        to: [email],
-        subject: 'Documentación Aprobada — CSC',
-        html,
-      }),
+    const resend = new Resend(RESEND_API_KEY)
+
+    const { error } = await resend.emails.send({
+      from: 'Corporación Socialista de Cemento <no-reply@notify.csc.otronodo.com>',
+      to: [email],
+      subject: 'Documentación Aprobada — CSC',
+      html,
     })
 
-    if (!emailRes.ok) {
-      const errorText = await emailRes.text()
-      console.error('Email send error:', errorText)
-      throw new Error(`Failed to send email: ${emailRes.status}`)
+    if (error) {
+      console.error('Resend error:', error)
+      throw new Error(`Failed to send email: ${error.message}`)
     }
 
     return new Response(JSON.stringify({ success: true }), {
