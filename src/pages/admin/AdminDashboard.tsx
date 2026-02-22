@@ -50,11 +50,17 @@ const AdminDashboard = () => {
 
   const loadProfiles = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setProfiles(data || []);
+    
+    // Load profiles and admin role user IDs in parallel
+    const [profilesRes, rolesRes] = await Promise.all([
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("user_roles").select("user_id").in("role", ["admin", "superadmin", "approver"]),
+    ]);
+
+    const adminUserIds = new Set((rolesRes.data || []).map((r) => r.user_id));
+    const nonAdminProfiles = (profilesRes.data || []).filter((p) => !adminUserIds.has(p.id));
+
+    setProfiles(nonAdminProfiles);
     setLoading(false);
   };
 
