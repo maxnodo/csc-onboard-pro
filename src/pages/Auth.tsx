@@ -63,12 +63,43 @@ const Auth = () => {
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_40%,hsl(38,70%,50%)_0%,transparent_50%)]" />
           <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_80%,hsl(215,60%,40%)_0%,transparent_50%)]" />
         </div>
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-10 left-10 w-32 h-32 border border-primary-foreground/30 rounded-lg rotate-12" />
+          <div className="absolute bottom-20 right-16 w-24 h-24 border border-primary-foreground/20 rounded-full" />
+          <div className="absolute top-1/3 right-10 w-16 h-16 border border-primary-foreground/20 rounded-md -rotate-6" />
+        </div>
         <div className="relative z-10 text-primary-foreground px-12 max-w-lg">
-          <div className="flex items-center gap-3 mb-8">
-            <Building2 className="h-12 w-12" />
+          <div className="flex items-center gap-4 mb-10">
+            <div className="p-3 bg-primary-foreground/10 rounded-xl backdrop-blur-sm border border-primary-foreground/10">
+              <Building2 className="h-10 w-10" />
+            </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight">CSC</h1>
-              <p className="text-sm opacity-80 font-sans">Corporación Socialista de Cemento</p>
+              <p className="text-sm opacity-70 font-sans tracking-wide uppercase">Corporación Socialista de Cemento</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold leading-snug">
+              Sistema de Registro y<br />Onboarding Documental
+            </h2>
+            <p className="text-primary-foreground/70 leading-relaxed font-sans">
+              Plataforma integral para el registro, carga documental y validación de distribuidores, constructores, emprendedores e instituciones públicas.
+            </p>
+
+            <div className="space-y-4 pt-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 h-2 w-2 rounded-full bg-primary-foreground/50 shrink-0" />
+                <p className="text-sm text-primary-foreground/60 font-sans">Registro rápido y seguro con verificación de identidad</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 h-2 w-2 rounded-full bg-primary-foreground/50 shrink-0" />
+                <p className="text-sm text-primary-foreground/60 font-sans">Carga documental guiada según su categoría</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 h-2 w-2 rounded-full bg-primary-foreground/50 shrink-0" />
+                <p className="text-sm text-primary-foreground/60 font-sans">Seguimiento en tiempo real del estado de su solicitud</p>
+              </div>
             </div>
           </div>
         </div>
