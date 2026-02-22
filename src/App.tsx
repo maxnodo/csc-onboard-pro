@@ -10,6 +10,9 @@ import CategorySelection from "./pages/onboarding/CategorySelection";
 import Step1GeneralInfo from "./pages/onboarding/Step1GeneralInfo";
 import Step2Documentation from "./pages/onboarding/Step2Documentation";
 import Step3Confirmation from "./pages/onboarding/Step3Confirmation";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import RequestReview from "./pages/admin/RequestReview";
+import SedeManagement from "./pages/admin/SedeManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,12 +24,22 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { session, loading, isAdmin } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Cargando...</p></div>;
+  if (!session) return <Navigate to="/auth" replace />;
+  if (!isAdmin) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+};
+
 const OnboardingRouter = () => {
-  const { profile, loading } = useAuth();
+  const { profile, loading, isAdmin } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Cargando...</p></div>;
   if (!profile) return null;
 
-  // Route based on profile status/step
+  // Admins go to admin panel
+  if (isAdmin) return <Navigate to="/admin" replace />;
+
   if (profile.status === "pending_verification") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
@@ -57,6 +70,10 @@ const AppRoutes = () => (
     <Route path="/onboarding/step-1" element={<ProtectedRoute><Step1GeneralInfo /></ProtectedRoute>} />
     <Route path="/onboarding/step-2" element={<ProtectedRoute><Step2Documentation /></ProtectedRoute>} />
     <Route path="/onboarding/step-3" element={<ProtectedRoute><Step3Confirmation /></ProtectedRoute>} />
+    {/* Admin routes */}
+    <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+    <Route path="/admin/request/:id" element={<AdminRoute><RequestReview /></AdminRoute>} />
+    <Route path="/admin/sedes" element={<AdminRoute><SedeManagement /></AdminRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

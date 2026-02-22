@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables, Enums } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
 
@@ -9,7 +9,10 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
+  roles: Enums<"app_role">[];
   loading: boolean;
+  isAdmin: boolean;
+  isSuperadmin: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -18,7 +21,10 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   profile: null,
+  roles: [],
   loading: true,
+  isAdmin: false,
+  isSuperadmin: false,
   signOut: async () => {},
   refreshProfile: async () => {},
 });
@@ -29,6 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [roles, setRoles] = useState<Enums<"app_role">[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
@@ -40,8 +47,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setProfile(data);
   };
 
+  const fetchRoles = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    setRoles(data?.map((r) => r.role) || []);
+  };
+
   const refreshProfile = async () => {
-    if (user) await fetchProfile(user.id);
+    if (user) {
+      await fetchProfile(user.id);
+      await fetchRoles(user.id);
+    }
   };
 
   useEffect(() => {
@@ -51,7 +69,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // If email just confirmed, update profile status
           if (event === "SIGNED_IN" && session.user.email_confirmed_at) {
             const { data: currentProfile } = await supabase
               .from("profiles")
@@ -67,8 +84,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           }
           await fetchProfile(session.user.id);
+          await fetchRoles(session.user.id);
         } else {
           setProfile(null);
+          setRoles([]);
         }
         setLoading(false);
       }
@@ -79,6 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
+        fetchRoles(session.user.id);
       }
       setLoading(false);
     });
@@ -91,10 +111,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setUser(null);
     setProfile(null);
+    setRoles([]);
   };
 
+  const isAdmin = roles.includes("admin") || roles.includes("superadmin");
+  const isSuperadmin = roles.includes("superadmin");
+
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user, profile, roles, loading, isAdmin, isSuperadmin, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
