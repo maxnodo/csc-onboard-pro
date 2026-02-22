@@ -4,11 +4,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import {
-  Building2, LayoutDashboard, FileSearch, MapPin, LogOut, Users,
+  Building2, LayoutDashboard, FileSearch, MapPin, LogOut, Users, ShieldCheck,
 } from "lucide-react";
 
 const navItems = [
   { title: "Solicitudes", url: "/admin", icon: LayoutDashboard },
+  { title: "Aprobador Presencial", url: "/admin/approver", icon: ShieldCheck },
   { title: "Gestión de Sedes", url: "/admin/sedes", icon: MapPin },
 ];
 
