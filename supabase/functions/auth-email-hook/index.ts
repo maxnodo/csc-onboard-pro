@@ -35,7 +35,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "csc-onboard-pro"
+const SITE_NAME = "Corporación Socialista de Cemento"
 const SENDER_DOMAIN = "notify.csc.otronodo.com"
 const ROOT_DOMAIN = "csc.otronodo.com"
 const FROM_DOMAIN = "notify.csc.otronodo.com" // Domain shown in From address (may be root or sender subdomain)
