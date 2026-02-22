@@ -72,6 +72,19 @@ const Dashboard = () => {
         return;
       }
 
+      // Delete old file from storage before uploading new one
+      const { data: oldDoc } = await supabase.from("documents").select("file_url").eq("id", docId).maybeSingle();
+      if (oldDoc?.file_url) {
+        let oldPath = oldDoc.file_url;
+        if (oldPath.includes("/storage/v1/")) {
+          oldPath = oldPath.split("/object/public/documents/")[1] || oldPath;
+        }
+        if (oldPath.startsWith("documents/")) {
+          oldPath = oldPath.substring("documents/".length);
+        }
+        await supabase.storage.from("documents").remove([oldPath]);
+      }
+
       const filePath = `${user.id}/${docType}/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage.from("documents").upload(filePath, file);
       if (uploadError) throw uploadError;
