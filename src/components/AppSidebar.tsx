@@ -76,8 +76,8 @@ const AppSidebar = () => {
                     <NavLink
                       to={item.url}
                       end={item.url === "/admin" || item.url === "/dashboard"}
-                      className="flex items-center gap-3 text-muted-foreground hover:text-foreground"
-                      activeClassName="bg-sidebar-accent text-primary font-medium"
+                      className="flex items-center gap-3 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
                       <span>{item.title}</span>
@@ -92,13 +92,13 @@ const AppSidebar = () => {
 
       <SidebarFooter className="border-t border-sidebar-border">
         {!isCollapsed && (
-          <div className="px-2 py-1 text-xs text-muted-foreground font-sans truncate">
+          <div className="px-2 py-1 text-xs text-sidebar-foreground/50 font-sans truncate">
             {profile?.email}
           </div>
         )}
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleSignOut} tooltip="Cerrar Sesión">
+            <SidebarMenuButton onClick={handleSignOut} tooltip="Cerrar Sesión" className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent">
               <LogOut className="h-4 w-4 shrink-0" />
               <span>Cerrar Sesión</span>
             </SidebarMenuButton>
