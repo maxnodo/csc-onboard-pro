@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import MyProfile from "./pages/MyProfile";
 import CategorySelection from "./pages/onboarding/CategorySelection";
 import Step1GeneralInfo from "./pages/onboarding/Step1GeneralInfo";
 import Step2Documentation from "./pages/onboarding/Step2Documentation";
@@ -67,6 +68,7 @@ const AppRoutes = () => (
     <Route path="/auth" element={<Auth />} />
     <Route path="/" element={<ProtectedRoute><OnboardingRouter /></ProtectedRoute>} />
     <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+    <Route path="/profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
     <Route path="/onboarding/category" element={<ProtectedRoute><CategorySelection /></ProtectedRoute>} />
     <Route path="/onboarding/step-1" element={<ProtectedRoute><Step1GeneralInfo /></ProtectedRoute>} />
     <Route path="/onboarding/step-2" element={<ProtectedRoute><Step2Documentation /></ProtectedRoute>} />

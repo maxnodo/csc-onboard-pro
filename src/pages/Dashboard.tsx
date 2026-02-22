@@ -1,12 +1,8 @@
-import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { categoryLabels } from "@/lib/document-matrix";
 import AppLayout from "@/components/AppLayout";
-import ProfileImageUpload from "@/components/ProfileImageUpload";
-import { useToast } from "@/hooks/use-toast";
 
 const statusConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   pending_verification: { label: "Verificación Pendiente", icon: <Clock className="h-5 w-5" />, color: "bg-warning/10 text-warning" },
@@ -20,45 +16,7 @@ const statusConfig: Record<string, { label: string; icon: React.ReactNode; color
 };
 
 const Dashboard = () => {
-  const { profile, user } = useAuth();
-  const { toast } = useToast();
-  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!user) return;
-    // Load current profile image from form_data
-    supabase
-      .from("form_data")
-      .select("form_data")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.form_data && typeof data.form_data === "object" && !Array.isArray(data.form_data)) {
-          const fd = data.form_data as Record<string, unknown>;
-          if (fd._profile_image_url) {
-            setProfileImageUrl(String(fd._profile_image_url));
-          }
-        }
-      });
-  }, [user]);
-
-  const saveImageUrl = async (url: string | null) => {
-    if (!user) return;
-    const { data: existing } = await supabase
-      .from("form_data")
-      .select("id, form_data")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (existing) {
-      const currentData = (typeof existing.form_data === "object" && !Array.isArray(existing.form_data))
-        ? existing.form_data as Record<string, unknown>
-        : {};
-      const updated = { ...currentData, _profile_image_url: url || "" };
-      await supabase.from("form_data").update({ form_data: updated }).eq("id", existing.id);
-    }
-    setProfileImageUrl(url);
-  };
+  const { profile } = useAuth();
 
   if (!profile) return null;
 
@@ -66,25 +24,7 @@ const Dashboard = () => {
 
   return (
     <AppLayout title="Estado de su Solicitud" description={profile.category ? categoryLabels[profile.category] : "Sin categoría asignada"}>
-      <div className="max-w-2xl space-y-6">
-        {/* Profile Image */}
-        {user && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">Mi Perfil</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProfileImageUpload
-                userId={user.id}
-                currentImageUrl={profileImageUrl}
-                onImageUploaded={(url) => saveImageUrl(url)}
-                onImageRemoved={() => saveImageUrl(null)}
-                label="Imagen de Perfil / Logo"
-              />
-            </CardContent>
-          </Card>
-        )}
-
+      <div className="max-w-2xl">
         <Card>
           <CardHeader>
             <CardTitle className="text-xl">Estado Actual</CardTitle>
