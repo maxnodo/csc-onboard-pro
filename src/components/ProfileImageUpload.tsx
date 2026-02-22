@@ -13,6 +13,7 @@ interface ProfileImageUploadProps {
   onImageRemoved: () => void;
   label?: string;
   isCompany?: boolean;
+  fallbackInitials?: string;
 }
 
 const ProfileImageUpload = ({
@@ -22,6 +23,7 @@ const ProfileImageUpload = ({
   onImageRemoved,
   label = "Imagen de Perfil / Logo",
   isCompany = true,
+  fallbackInitials,
 }: ProfileImageUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
@@ -127,8 +129,8 @@ const ProfileImageUpload = ({
       <div className="mt-2 flex items-center gap-5">
         <Avatar className="h-20 w-20 border-2 border-muted">
           <AvatarImage src={currentImageUrl || undefined} alt="Perfil" />
-          <AvatarFallback className="bg-muted">
-            {isCompany ? (
+          <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
+            {fallbackInitials ? fallbackInitials : isCompany ? (
               <Building2 className="h-8 w-8 text-muted-foreground" />
             ) : (
               <User className="h-8 w-8 text-muted-foreground" />

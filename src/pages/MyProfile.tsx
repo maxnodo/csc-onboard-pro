@@ -50,6 +50,13 @@ const MyProfile = () => {
 
   if (!profile || !user) return null;
 
+  const initials = (profile.full_name || "")
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase())
+    .slice(0, 2)
+    .join("");
+
   return (
     <AppLayout title="Mi Perfil" description="Gestione su información personal">
       <div className="max-w-2xl space-y-6">
@@ -64,6 +71,7 @@ const MyProfile = () => {
               onImageUploaded={(url) => saveImageUrl(url)}
               onImageRemoved={() => saveImageUrl(null)}
               label="Imagen de Perfil / Logo"
+              fallbackInitials={initials || undefined}
             />
           </CardContent>
         </Card>
