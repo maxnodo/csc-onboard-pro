@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle2, XCircle, AlertTriangle, FileWarning, Upload, Loader2, ChevronLeft, ChevronRight, ShieldCheck, FileX } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Clock, CheckCircle2, XCircle, AlertTriangle, FileWarning, Upload, Loader2, ChevronLeft, ChevronRight, ShieldCheck, FileX, FileText } from "lucide-react";
 import { categoryLabels, documentMatrixByCategory } from "@/lib/document-matrix";
 import AppLayout from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,19 +42,21 @@ const Dashboard = () => {
   const [uploading, setUploading] = useState<string | null>(null);
   const [page, setPage] = useState(0);
 
-  const { data: rejectedDocs } = useQuery({
-    queryKey: ["rejected-documents", user?.id],
+  const { data: allDocs } = useQuery({
+    queryKey: ["user-documents", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("id, document_type, rejection_reason, category")
+        .select("id, document_type, rejection_reason, category, status")
         .eq("user_id", user!.id)
-        .eq("status", "rejected");
+        .order("created_at");
       if (error) throw error;
       return data;
     },
     enabled: !!user?.id,
   });
+
+  const rejectedDocs = allDocs?.filter((d) => d.status === "rejected") || [];
 
   const handleReupload = async (docId: string, docType: string, file: File) => {
     if (!user) return;
@@ -97,7 +100,7 @@ const Dashboard = () => {
       }).eq("id", docId);
 
       toast({ title: "Documento reenviado", description: "Su documento ha sido enviado nuevamente para revisión." });
-      queryClient.invalidateQueries({ queryKey: ["rejected-documents", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["user-documents", user.id] });
     } catch (error: any) {
       toast({ title: "Error al subir", description: error.message, variant: "destructive" });
     } finally {
@@ -116,9 +119,17 @@ const Dashboard = () => {
     matrix.forEach((req) => { docLabelMap[req.key] = req.label; });
   }
 
-  const totalRejected = rejectedDocs?.length || 0;
+  const totalRejected = rejectedDocs.length;
   const totalPages = Math.ceil(totalRejected / DOCS_PER_PAGE);
-  const paginatedDocs = rejectedDocs?.slice(page * DOCS_PER_PAGE, (page + 1) * DOCS_PER_PAGE) || [];
+  const paginatedDocs = rejectedDocs.slice(page * DOCS_PER_PAGE, (page + 1) * DOCS_PER_PAGE);
+
+  const docStatusConfig: Record<string, { label: string; color: string }> = {
+    pending: { label: "Pendiente", color: "bg-muted text-muted-foreground" },
+    uploaded: { label: "Subido", color: "bg-primary/10 text-primary" },
+    under_review: { label: "En Revisión", color: "bg-warning/10 text-warning" },
+    approved: { label: "Aprobado", color: "bg-success/10 text-success" },
+    rejected: { label: "Rechazado", color: "bg-destructive/10 text-destructive" },
+  };
 
   // Progress: rough estimate based on status
   const progressMap: Record<string, number> = {
@@ -158,7 +169,45 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Rejected Documents */}
+        {/* All Documents List */}
+        {allDocs && allDocs.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2 pt-5 px-6">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Mis Documentos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-6 pb-5 space-y-2">
+              {allDocs.map((doc) => {
+                const st = docStatusConfig[doc.status] || docStatusConfig.pending;
+                const isRejected = doc.status === "rejected";
+                return (
+                  <div
+                    key={doc.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${isRejected ? "border-destructive/40 bg-destructive/5" : ""}`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm font-sans">
+                        {docLabelMap[doc.document_type] || doc.document_type.replace(/_/g, " ")}
+                      </p>
+                      {isRejected && doc.rejection_reason && (
+                        <p className="text-xs text-destructive mt-1 font-medium">
+                          <span className="font-semibold">Observación:</span> {doc.rejection_reason}
+                        </p>
+                      )}
+                    </div>
+                    <Badge variant="outline" className={`text-xs shrink-0 ml-3 ${st.color}`}>
+                      {st.label}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Rejected Documents - Reupload */}
         {totalRejected > 0 && (
           <Card className="border-destructive/20 overflow-hidden">
             <CardHeader className="pb-2 pt-5 px-6">
