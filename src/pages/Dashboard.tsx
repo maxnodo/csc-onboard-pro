@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle2, XCircle, AlertTriangle, FileWarning, Upload, Loader2, ChevronLeft, ChevronRight, ShieldCheck, FileX, FileText } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, AlertTriangle, FileWarning, Upload, Loader2, ChevronLeft, ChevronRight, ShieldCheck, FileX, FileText, Download } from "lucide-react";
 import { categoryLabels, documentMatrixByCategory } from "@/lib/document-matrix";
 import AppLayout from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,7 +47,7 @@ const Dashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("id, document_type, rejection_reason, category, status")
+        .select("id, document_type, rejection_reason, category, status, file_name")
         .eq("user_id", user!.id)
         .order("created_at");
       if (error) throw error;
@@ -57,6 +57,89 @@ const Dashboard = () => {
   });
 
   const rejectedDocs = allDocs?.filter((d) => d.status === "rejected") || [];
+
+  // Calculate missing required documents
+  const category = profile?.category;
+  const requirements = category ? documentMatrixByCategory[category] || [] : [];
+  const requiredDocs = requirements.filter((r) => !r.conditional);
+  const missingDocs = requiredDocs.filter(
+    (req) => !allDocs?.some((d) => d.document_type === req.key)
+  );
+  const canUploadMore = profile?.status === "under_review" || profile?.status === "rejected";
+
+  const handleUploadNew = async (docType: string, file: File) => {
+    if (!user || !category) return;
+    setUploading(docType);
+
+    try {
+      const maxSize = 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast({ title: "Error", description: "El archivo excede el tamaño máximo de 10MB.", variant: "destructive" });
+        return;
+      }
+
+      const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+      if (!allowedTypes.includes(file.type)) {
+        toast({ title: "Error", description: "Solo se permiten archivos PDF, JPG y PNG.", variant: "destructive" });
+        return;
+      }
+
+      const req = requirements.find((r) => r.key === docType);
+      const filePath = `${user.id}/${docType}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage.from("documents").upload(filePath, file);
+      if (uploadError) throw uploadError;
+
+      await supabase.from("documents").insert({
+        user_id: user.id,
+        document_type: docType,
+        file_url: filePath,
+        file_name: file.name,
+        status: "uploaded",
+        category,
+        multiple: req?.multiple || false,
+        conditional: req?.conditional || false,
+      });
+
+      toast({ title: "Documento subido", description: "Su documento ha sido enviado para revisión." });
+      queryClient.invalidateQueries({ queryKey: ["user-documents", user.id] });
+    } catch (error: any) {
+      toast({ title: "Error al subir", description: error.message, variant: "destructive" });
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const handleGenerateDocument = (docType: string) => {
+    const title = docType === "hoja_consignacion" ? "HOJA DE CONSIGNACIÓN" : "CARTA DE SOLICITUD";
+    const content = `
+CORPORACIÓN SOCIALISTA DE CEMENTO (CSC)
+${title}
+
+Fecha: ${new Date().toLocaleDateString("es-VE")}
+Categoría: ${category ? categoryLabels[category] : ""}
+Solicitante: ${profile?.full_name || ""}
+Correo: ${profile?.email || ""}
+
+Este documento ha sido generado automáticamente por el Sistema de Onboarding Documental de CSC.
+El solicitante debe imprimir, firmar y volver a cargar este documento firmado.
+
+_________________________
+Firma del Solicitante
+
+_________________________
+Nombre y Cédula
+    `.trim();
+
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title.replace(/ /g, "_")}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast({ title: "Documento generado", description: "Descargue, firme y vuelva a cargar el documento firmado." });
+  };
 
   const handleReupload = async (docId: string, docType: string, file: File) => {
     if (!user) return;
@@ -75,7 +158,6 @@ const Dashboard = () => {
         return;
       }
 
-      // Delete old file from storage before uploading new one
       const { data: oldDoc } = await supabase.from("documents").select("file_url").eq("id", docId).maybeSingle();
       if (oldDoc?.file_url) {
         let oldPath = oldDoc.file_url;
@@ -131,7 +213,6 @@ const Dashboard = () => {
     rejected: { label: "Rechazado", color: "bg-destructive/10 text-destructive" },
   };
 
-  // Progress: rough estimate based on status
   const progressMap: Record<string, number> = {
     pending_verification: 10,
     onboarding_started: 30,
@@ -168,6 +249,82 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Missing Documents - Upload Section */}
+        {canUploadMore && missingDocs.length > 0 && (
+          <Card className="border-warning/30 overflow-hidden">
+            <CardHeader className="pb-2 pt-5 px-6">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2 text-warning">
+                  <FileWarning className="h-5 w-5" />
+                  Documentos Pendientes por Subir
+                </CardTitle>
+                <span className="text-xs font-medium bg-warning/10 text-warning px-2.5 py-1 rounded-full">
+                  {missingDocs.length} {missingDocs.length === 1 ? "faltante" : "faltantes"}
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="px-6 pb-5 space-y-3">
+              {missingDocs.map((req) => {
+                const isGenerated = req.type === "FORM_GENERATED_FILE_UPLOAD";
+                return (
+                  <div
+                    key={req.key}
+                    className="flex items-center justify-between p-4 rounded-lg border border-warning/20 bg-warning/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <Clock className="h-5 w-5 text-warning shrink-0" />
+                      <div>
+                        <p className="font-medium text-sm font-sans">{req.label}</p>
+                        {req.multiple && (
+                          <Badge variant="secondary" className="text-xs mt-1">Múltiples</Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isGenerated && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleGenerateDocument(req.key)}
+                        >
+                          <Download className="h-4 w-4 mr-1" /> Generar
+                        </Button>
+                      )}
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          multiple={req.multiple}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleUploadNew(req.key, file);
+                            e.target.value = "";
+                          }}
+                        />
+                        <Button
+                          variant="default"
+                          size="sm"
+                          asChild
+                          disabled={uploading === req.key}
+                        >
+                          <span>
+                            {uploading === req.key ? (
+                              <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Subiendo...</>
+                            ) : (
+                              <><Upload className="h-4 w-4 mr-1" /> Subir</>
+                            )}
+                          </span>
+                        </Button>
+                      </label>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
 
         {/* All Documents List */}
         {allDocs && allDocs.length > 0 && (
@@ -271,7 +428,6 @@ const Dashboard = () => {
                 </div>
               ))}
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between pt-3 border-t">
                   <Button
