@@ -1,59 +1,60 @@
 
-# Aprobacion Automatica de Documentacion y Notificacion por Correo
 
-## Problema actual
-- Existen botones manuales "Aprobar Documentacion" y "Rechazar Solicitud" que no deberian estar
-- La aprobacion de la documentacion completa debe ser automatica cuando el 100% de los documentos individuales estan aprobados
+# Correccion: Validar documentos requeridos antes de auto-aprobar
 
-## Solucion propuesta
+## Problema
+La logica de auto-aprobacion en `RequestReview.tsx` (linea 111) solo verifica que todos los documentos **subidos** esten aprobados. No valida que el usuario haya subido **todos los documentos requeridos** segun la matriz documental de su categoria.
 
-### 1. Eliminar botones manuales de la UI
-- Remover la tarjeta "Acciones" con los botones "Aprobar Documentacion" y "Rechazar Solicitud"
-- Remover los dialogos asociados (Approve Dialog y Reject Request Dialog)
-- Remover el estado y funciones relacionadas: `showApprove`, `selectedSede`, `showReject`, `rejectReason`, `handleApproveRequest`, `handleRejectRequest`
+Ejemplo: Si la categoria requiere 5 documentos y el usuario solo subio 3, al aprobar esos 3 el sistema auto-aprueba porque "todos los documentos existentes estan aprobados".
 
-### 2. Auto-aprobacion al aprobar documentos individuales
-- Despues de aprobar un documento individual (`handleApproveDoc`), verificar si TODOS los documentos del usuario ya estan aprobados
-- Si el 100% esta aprobado, actualizar automaticamente el perfil a `approved_documentation`
-- Mostrar un toast informando que la documentacion fue aprobada automaticamente
+## Solucion
 
-**Nota sobre la sede**: Actualmente la aprobacion manual requiere asignar una sede. Con la auto-aprobacion, la sede se asignaria en el paso del aprobador presencial (Panel del Aprobador), que ya existe en el sistema. Por lo tanto no se necesita asignar sede en este paso.
+### Cambio en `src/pages/admin/RequestReview.tsx`
 
-### 3. Notificacion por correo electronico
-- Crear una nueva edge function `notify-documentation-approved` que envie un correo al usuario cuando su documentacion es aprobada
-- El correo indicara que la documentacion fue aprobada y que debe acercarse a la sucursal
-- Crear un template de correo React Email con el estilo CSC existente
-- La edge function se invocara desde el frontend despues de la auto-aprobacion
+En la funcion `handleApproveDoc`, despues de aprobar un documento individual:
 
-### 4. Barra de progreso visual
-- Agregar un indicador de progreso en la seccion de documentos que muestre cuantos documentos estan aprobados vs total
-- Ejemplo: "5/8 documentos aprobados" con una barra de progreso
+1. Obtener la lista de documentos requeridos (no condicionales) de `documentMatrixByCategory` usando la categoria del perfil del usuario
+2. Verificar que para **cada documento requerido** exista al menos un documento subido con estado "approved"
+3. Solo si el 100% de los requeridos estan cubiertos y aprobados, proceder con la auto-aprobacion
 
-## Detalles tecnicos
+### Cambios en la barra de progreso
 
-### Cambios en `RequestReview.tsx`
-- Eliminar: tarjeta "Acciones", dialogos de aprobacion/rechazo de solicitud, estados y handlers relacionados
-- Modificar `handleApproveDoc` para verificar si todos los documentos quedan aprobados tras la accion
-- Si todos aprobados: actualizar perfil a `approved_documentation` y llamar a la edge function de notificacion
-- Agregar barra de progreso con conteo de aprobados
+Actualmente la barra muestra `aprobados / subidos`. Deberia mostrar `aprobados / requeridos` para que el admin vea claramente cuantos faltan.
 
-### Nueva edge function: `notify-documentation-approved`
+### Detalle tecnico
+
 ```
-supabase/functions/notify-documentation-approved/index.ts
-```
-- Recibe `userId`, `email`, `fullName` en el body
-- Usa Resend (via LOVABLE_API_KEY y sendLovableEmail) con el dominio ya configurado `notify.csc.otronodo.com`
-- Envia correo con template indicando aprobacion y que debe acercarse a la sucursal
+// Importar documentMatrixByCategory (ya importado categoryLabels del mismo archivo)
+import { categoryLabels, documentMatrixByCategory } from "@/lib/document-matrix";
 
-### Nuevo template de correo
-```
-supabase/functions/_shared/email-templates/documentation-approved.tsx
-```
-- Estilo consistente con los templates existentes (colores CSC, tipografia)
-- Contenido: "Su documentacion ha sido aprobada. Debe acercarse a la sucursal mas cercana para completar el proceso"
+// En handleApproveDoc, reemplazar la validacion actual:
+const updatedDocs = documents.map(d => d.id === docId ? {...d, status: "approved"} : d);
+const allApproved = updatedDocs.every(d => d.status === "approved");
 
-### Flujo completo
-1. Admin aprueba documento individual (check verde)
-2. Sistema verifica: todos los documentos aprobados?
-3. Si: actualiza perfil a `approved_documentation`, envia correo, muestra toast
-4. No: continua revision normal
+// Por esta validacion correcta:
+const category = profile?.category;
+const requirements = category ? documentMatrixByCategory[category] || [] : [];
+const requiredDocs = requirements.filter(r => !r.conditional);
+const updatedDocs = documents.map(d => d.id === docId ? {...d, status: "approved"} : d);
+
+const allRequiredApproved = requiredDocs.every(req => 
+  updatedDocs.some(d => d.document_type === req.key && d.status === "approved")
+);
+
+// Solo auto-aprobar si TODOS los requeridos tienen documento aprobado
+if (allRequiredApproved && requiredDocs.length > 0 && profile) { ... }
+```
+
+Para la barra de progreso, calcular contra requeridos:
+
+```
+const requiredDocs = requirements.filter(r => !r.conditional);
+const approvedCount = requiredDocs.filter(req => 
+  documents.some(d => d.document_type === req.key && d.status === "approved")
+).length;
+const progressPercent = requiredDocs.length > 0 ? (approvedCount / requiredDocs.length) * 100 : 0;
+```
+
+### Archivos a modificar
+- `src/pages/admin/RequestReview.tsx` - Agregar import de `documentMatrixByCategory`, corregir logica de auto-aprobacion y barra de progreso
+
