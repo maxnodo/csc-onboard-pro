@@ -87,6 +87,7 @@ const Step2Documentation = () => {
             file_url: filePath,
             file_name: file.name,
             status: "uploaded",
+            rejection_reason: null,
           }).eq("id", existingDoc.id);
         } else {
           await supabase.from("documents").insert({
@@ -177,10 +178,11 @@ Nombre y Cédula
         {requirements.map((req) => {
           const docs = getDocsForType(req.key);
           const hasUpload = docs.some((d) => d.status !== "pending");
+          const hasRejected = docs.some((d) => d.status === "rejected");
           const isGenerated = req.type === "FORM_GENERATED_FILE_UPLOAD";
 
           return (
-            <Card key={req.key} className={hasUpload ? "border-primary/30" : ""}>
+            <Card key={req.key} className={hasRejected ? "border-destructive/40 bg-destructive/5" : hasUpload ? "border-primary/30" : ""}>
               <CardContent className="py-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -199,15 +201,25 @@ Nombre y Cédula
                       </div>
                       {docs.length > 0 && (
                         <div className="mt-2 space-y-1">
-                          {docs.map((doc) => (
-                            <div key={doc.id} className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <FileText className="h-3 w-3" />
-                              <span className="truncate">{doc.file_name}</span>
-                              <Badge variant={statusBadge[doc.status]?.variant || "outline"} className="text-xs">
-                                {statusBadge[doc.status]?.label || doc.status}
-                              </Badge>
-                            </div>
-                          ))}
+                          {docs.map((doc) => {
+                            const isRejected = doc.status === "rejected";
+                            return (
+                              <div key={doc.id}>
+                                <div className={`flex items-center gap-2 text-xs ${isRejected ? "text-destructive" : "text-muted-foreground"}`}>
+                                  <FileText className="h-3 w-3" />
+                                  <span className="truncate">{doc.file_name}</span>
+                                  <Badge variant={statusBadge[doc.status]?.variant || "outline"} className="text-xs">
+                                    {statusBadge[doc.status]?.label || doc.status}
+                                  </Badge>
+                                </div>
+                                {isRejected && doc.rejection_reason && (
+                                  <p className="text-xs text-destructive mt-1 ml-5 font-medium">
+                                    <span className="font-semibold">Observación:</span> {doc.rejection_reason}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
