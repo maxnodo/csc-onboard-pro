@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "./AdminLayout";
-import { categoryLabels } from "@/lib/document-matrix";
+import { categoryLabels, documentMatrixByCategory } from "@/lib/document-matrix";
 import {
   ArrowLeft, CheckCircle2, XCircle, FileText,
   ExternalLink, MapPin, User, Mail, Phone, Eye,
@@ -106,11 +106,16 @@ const RequestReview = () => {
     await supabase.from("documents").update({ status: "approved" }).eq("id", docId);
     toast({ title: "Documento aprobado" });
 
-    // Check if all documents are now approved
+    // Check if ALL required documents (per category matrix) are approved
     const updatedDocs = documents.map((d) => d.id === docId ? { ...d, status: "approved" as const } : d);
-    const allApproved = updatedDocs.length > 0 && updatedDocs.every((d) => d.status === "approved");
+    const category = profile?.category;
+    const requirements = category ? documentMatrixByCategory[category] || [] : [];
+    const requiredDocs = requirements.filter(r => !r.conditional);
+    const allRequiredApproved = requiredDocs.length > 0 && requiredDocs.every(req =>
+      updatedDocs.some(d => d.document_type === req.key && d.status === "approved")
+    );
 
-    if (allApproved && profile) {
+    if (allRequiredApproved && profile) {
       // Auto-approve documentation
       await supabase.from("profiles").update({
         status: "approved_documentation",
@@ -160,8 +165,14 @@ const RequestReview = () => {
   }
 
   const assignedSede = sedes.find((s) => s.id === profile.sede_id);
-  const approvedCount = documents.filter((d) => d.status === "approved").length;
-  const progressPercent = documents.length > 0 ? (approvedCount / documents.length) * 100 : 0;
+  const category = profile.category;
+  const requirements = category ? documentMatrixByCategory[category] || [] : [];
+  const requiredDocs = requirements.filter(r => !r.conditional);
+  const approvedCount = requiredDocs.filter(req =>
+    documents.some(d => d.document_type === req.key && d.status === "approved")
+  ).length;
+  const totalRequired = requiredDocs.length;
+  const progressPercent = totalRequired > 0 ? (approvedCount / totalRequired) * 100 : 0;
 
   return (
     <AdminLayout
@@ -238,7 +249,7 @@ const RequestReview = () => {
               {documents.length > 0 && (
                 <div className="mt-3 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{approvedCount}/{documents.length} documentos aprobados</span>
+                    <span className="text-muted-foreground">{approvedCount}/{totalRequired} documentos requeridos aprobados</span>
                     <span className="font-medium">{Math.round(progressPercent)}%</span>
                   </div>
                   <Progress value={progressPercent} className="h-2" />
