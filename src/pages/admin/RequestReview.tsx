@@ -122,17 +122,17 @@ const RequestReview = () => {
         description: "Todos los documentos fueron aprobados. Se notificará al usuario por correo.",
       });
 
-      // Send notification email
-      try {
-        await supabase.functions.invoke("notify-documentation-approved", {
-          body: {
-            email: profile.email,
-            fullName: profile.full_name || "Usuario",
-          },
-        });
-      } catch (err) {
-        console.error("Error sending notification email:", err);
-      }
+      // TODO: Envío de correo suspendido hasta verificar dominio en Resend
+      // try {
+      //   await supabase.functions.invoke("notify-documentation-approved", {
+      //     body: {
+      //       email: profile.email,
+      //       fullName: profile.full_name || "Usuario",
+      //     },
+      //   });
+      // } catch (err) {
+      //   console.error("Error sending notification email:", err);
+      // }
     }
 
     loadData();
