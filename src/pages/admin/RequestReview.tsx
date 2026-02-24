@@ -252,10 +252,17 @@ const RequestReview = () => {
                 <div className="space-y-3">
                   {documents.map((doc) => {
                     const st = docStatusLabels[doc.status] || docStatusLabels.pending;
+                    const isRejected = doc.status === "rejected";
+                    const isApproved = doc.status === "approved";
+                    const rowClass = isRejected
+                      ? "border-destructive/40 bg-destructive/5"
+                      : isApproved
+                        ? "border-success/40 bg-success/5"
+                        : "border";
                     return (
-                      <div key={doc.id} className="flex items-center justify-between p-4 rounded-lg border">
+                      <div key={doc.id} className={`flex items-center justify-between p-4 rounded-lg ${rowClass} transition-colors`}>
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
+                          <FileText className={`h-5 w-5 shrink-0 ${isRejected ? "text-destructive" : isApproved ? "text-success" : "text-muted-foreground"}`} />
                           <div className="min-w-0">
                             <p className="font-medium text-sm font-sans capitalize">
                               {doc.document_type.replace(/_/g, " ")}
@@ -264,7 +271,9 @@ const RequestReview = () => {
                               <p className="text-xs text-muted-foreground truncate">{doc.file_name}</p>
                             )}
                             {doc.rejection_reason && (
-                              <p className="text-xs text-destructive mt-1">Motivo: {doc.rejection_reason}</p>
+                              <p className="text-xs text-destructive mt-1 font-medium">
+                                <span className="font-semibold">Motivo:</span> {doc.rejection_reason}
+                              </p>
                             )}
                           </div>
                         </div>
@@ -286,7 +295,7 @@ const RequestReview = () => {
                           )}
 
                           {doc.status === "approved" ? (
-                            <Button size="sm" variant="outline" className="border-green-500 bg-green-50 text-green-600 pointer-events-none">
+                            <Button size="sm" variant="outline" className="border-success/50 bg-success/10 text-success pointer-events-none">
                               <CheckCircle2 className="h-3 w-3" />
                             </Button>
                           ) : (doc.status === "uploaded" || doc.status === "under_review") ? (
@@ -296,7 +305,7 @@ const RequestReview = () => {
                           ) : null}
 
                           {doc.status === "rejected" ? (
-                            <Button size="sm" variant="outline" className="border-red-500 bg-red-50 text-red-600 pointer-events-none">
+                            <Button size="sm" variant="outline" className="border-destructive/50 bg-destructive/10 text-destructive pointer-events-none">
                               <XCircle className="h-3 w-3" />
                             </Button>
                           ) : (doc.status === "uploaded" || doc.status === "under_review") ? (
