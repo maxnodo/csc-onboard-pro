@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tipos de Cliente — CSC Onboard Pro</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f7f4;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.10);
+      --border-hover: rgba(0,0,0,0.22);
+      --text-primary: #1a1a18;
+      --text-secondary: #5f5e5a;
+      --text-tertiary: #9c9a92;
+      --radius-lg: 14px;
+      --radius-md: 8px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1c1c1a;
+        --surface: #252523;
+        --border: rgba(255,255,255,0.10);
+        --border-hover: rgba(255,255,255,0.22);
+        --text-primary: #e8e6de;
+        --text-secondary: #a8a69e;
+        --text-tertiary: #6c6a62;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 48px 24px 64px;
+    }
+
+    header {
+      max-width: 900px;
+      margin: 0 auto 36px;
+    }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    header p {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      cursor: pointer;
+      transition: border-color .18s, box-shadow .18s;
+    }
+
+    .card:hover {
+      border-color: var(--border-hover);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 13px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .card-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 14px;
+    }
+
+    .doc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .doc-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .doc-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .doc-item em {
+      color: var(--text-tertiary);
+      font-style: normal;
+    }
+
+    .count-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .count-label { font-size: 11px; color: var(--text-tertiary); }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+
+    .tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 5px;
+    }
+
+    /* Distribuidor — blue */
+    .c1 .badge     { background: #E6F1FB; color: #0C447C; }
+    .c1 .doc-dot   { background: #378ADD; }
+    .c1 .count-val { color: #185FA5; font-size: 12px; font-weight: 500; }
+    .c1 .tag       { background: #E6F1FB; color: #0C447C; }
+    @media (prefers-color-scheme: dark) {
+      .c1 .badge     { background: #0C447C; color: #B5D4F4; }
+      .c1 .count-val { color: #85B7EB; }
+      .c1 .tag       { background: #0C447C; color: #B5D4F4; }
+    }
+
+    /* Constructor — amber */
+    .c2 .badge     { background: #FAEEDA; color: #633806; }
+    .c2 .doc-dot   { background: #BA7517; }
+    .c2 .count-val { color: #854F0B; font-size: 12px; font-weight: 500; }
+    .c2 .tag       { background: #FAEEDA; color: #633806; }
+    @media (prefers-color-scheme: dark) {
+      .c2 .badge     { background: #633806; color: #FAC775; }
+      .c2 .count-val { color: #EF9F27; }
+      .c2 .tag       { background: #633806; color: #FAC775; }
+    }
+
+    /* Emprendedor — teal */
+    .c3 .badge     { background: #E1F5EE; color: #085041; }
+    .c3 .doc-dot   { background: #1D9E75; }
+    .c3 .count-val { color: #0F6E56; font-size: 12px; font-weight: 500; }
+    .c3 .tag       { background: #E1F5EE; color: #085041; }
+    @media (prefers-color-scheme: dark) {
+      .c3 .badge     { background: #085041; color: #9FE1CB; }
+      .c3 .count-val { color: #5DCAA5; }
+      .c3 .tag       { background: #085041; color: #9FE1CB; }
+    }
+
+    /* Alcaldía — purple */
+    .c4 .badge     { background: #EEEDFE; color: #26215C; }
+    .c4 .doc-dot   { background: #7F77DD; }
+    .c4 .count-val { color: #534AB7; font-size: 12px; font-weight: 500; }
+    .c4 .tag       { background: #EEEDFE; color: #26215C; }
+    @media (prefers-color-scheme: dark) {
+      .c4 .badge     { background: #26215C; color: #CECBF6; }
+      .c4 .count-val { color: #AFA9EC; }
+      .c4 .tag       { background: #26215C; color: #CECBF6; }
+    }
+
+    footer {
+      max-width: 900px;
+      margin: 36px auto 0;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Tipos de cliente</h1>
+    <p>Categorías disponibles en el onboarding · datos de <code>src/lib/document-matrix.ts</code></p>
+  </header>
+
+  <div class="grid">
+
+    <!-- Distribuidor -->
+    <div class="card c1">
+      <span class="badge">Empresa</span>
+      <div class="card-title">Distribuidor</div>
+      <div class="card-sub">Ferretería · Bloquera · Transformador</div>
+      <div class="divider"></div>
+      <div class="doc-list">
+        <div class="doc-item"><span class="doc-dot"></span>Hoja de consignación <em>(generado)</em></div>
+        <div class="doc-item"><span class="doc-dot"></span>Carta de solicitud <em>(generado)</em></div>
+        <div class="doc-item"><span class="doc-dot"></span>Acta constitutiva / Reg. Mercantil</div>
+        <div class="doc-item"><span class="doc-dot"></span>Declaración ISLR / IVA</div>
+        <div class="doc-item"><span class="doc-dot"></span>Cédula de accionistas</div>
+        <div class="doc-item"><span class="doc-dot"></span>RIF empresa</div>
+        <div class="doc-item"><span class="doc-dot"></span>RIF accionistas</div>
+        <div class="doc-item"><span class="doc-dot"></span>Registro fotográfico <em>(múltiple)</em></div>
+        <div class="doc-item"><span class="doc-dot"></span>Referencias comerciales (3) <em>(múltiple)</em></div>
+        <div class="doc-item"><span class="doc-dot"></span>Referencia bancaria</div>
+      </div>
+      <div class="count-row">
+        <span class="count-label">Documentos requeridos</span>
+        <span class="count-val">10 docs</span>
+      </div>
+      <div class="tags">
+        <span class="tag">Razón social</span>
+        <span class="tag">RIF</span>
+        <span class="tag">Rep. Legal</span>
+        <span class="tag">Dirección fiscal</span>
+      </div>
+    </div>
+
+    <!-- Constructor -->
+    <div class="card c2">
+      <span class="badge">Empresa</span>
+      <div class="card-title">Constructor</div>
+      <div class="card-sub">Constructoras con proyectos de obra activos o planificados</div>
+      <div class="divider"></div>
+      <div class="doc-list">
+        <div class="doc-item"><span class="doc-dot"></span>Hoja de consignación <em>(generado)</em></div>
+        <div class="doc-item"><span class="doc-dot"></span>Carta de solicitud <em>(generado)</em></div>
+        <div class="doc-item"><span class="doc-dot"></span>Acta constitutiva / Reg. Mercantil</div>
+        <div class="doc-item"><span class="doc-dot"></span>Declaración ISLR / IVA</div>
+        <div class="doc-item"><span class="doc-dot"></span>Cédula de accionistas</div>
+        <div class="doc-item"><span class="doc-dot"></span>RIF empresa y accionistas</div>
+        <div class="doc-item"><span class="doc-dot"></span>Registro fotográfico <em>(múltiple)</em></div>
+        <div class="doc-item"><span class="doc-dot"></span>Memoria descriptiva</div>
+        <div class="doc-item"><span class="doc-dot"></span>Contrato de obra</div>
+        <div class="doc-item"><span class="doc-dot"></span>Referencias comerciales (3) <em>(múltiple)</em></div>
+        <div class="doc-item"><span class="doc-dot"></span>Referencia bancaria</div>
+        <div class="doc-item"><span class="doc-dot"></span>Acta de prórroga <em>(si aplica)</em></div>
+      </div>
+      <div class="count-row">
+        <span class="count-label">Documentos requeridos</span>
+        <span class="count-val">12 docs</span>
+      </div>
+      <div class="tags">
+        <span class="tag">Nombre obra</span>
+        <span class="tag">Monto estimado</span>
+        <span class="tag">Fecha inicio</span>
+        <span class="tag">Fecha culminación</span>
+      </div>
+    </div>
+
+    <!-- Emprendedor -->
+    <div class="card c3">
+      <span class="badge">Persona natural</span>
+      <div class="card-title">Emprendedor</div>
+      <div class="card-sub">Actividad económica individual relacionada al sector</div>
+      <div class="divider"></div>
+      <div class="doc-list">
+        <div class="doc-item"><span class="doc-dot"></span>Hoja de consignación <em>(generado)</em></div>
+        <div class="doc-item"><span class="doc-dot"></span>Carta de solicitud <em>(generado)</em></div>
+        <div class="doc-item"><span class="doc-dot"></span>Registro de emprendedor</div>
+        <div class="doc-item"><span class="doc-dot"></span>Cédula de identidad</div>
+        <div class="doc-item"><span class="doc-dot"></span>RIF personal</div>
+        <div class="doc-item"><span class="doc-dot"></span>Registro fotográfico <em>(múltiple)</em></div>
+        <div class="doc-item"><span class="doc-dot"></span>Registro IVSS</div>
+        <div class="doc-item"><span class="doc-dot"></span>Registro INCES</div>
+        <div class="doc-item"><span class="doc-dot"></span>Registro FAOV</div>
+      </div>
+      <div class="count-row">
+        <span class="count-label">Documentos requeridos</span>
+        <span class="count-val">9 docs</span>
+      </div>
+      <div class="tags">
+        <span class="tag">Nombre completo</span>
+        <span class="tag">Cédula</span>
+        <span class="tag">Actividad económica</span>
+      </div>
+    </div>
+
+    <!-- Alcaldía -->
+    <div class="card c4">
+      <span class="badge">Ente gubernamental</span>
+      <div class="card-title">Alcaldía / Gobernación</div>
+      <div class="card-sub">Entes municipales o regionales</div>
+      <div class="divider"></div>
+      <div class="doc-list">
+        <div class="doc-item"><span class="doc-dot"></span>Hoja de consignación <em>(generado)</em></div>
+        <div class="doc-item"><span class="doc-dot"></span>Carta de solicitud <em>(generado)</em></div>
+        <div class="doc-item"><span class="doc-dot"></span>Gaceta oficial</div>
+        <div class="doc-item"><span class="doc-dot"></span>Nombramiento de autoridad</div>
+        <div class="doc-item"><span class="doc-dot"></span>Cédula de la autoridad</div>
+        <div class="doc-item"><span class="doc-dot"></span>RIF institucional</div>
+        <div class="doc-item"><span class="doc-dot"></span>Carnet de la patria <em>(si requerido)</em></div>
+      </div>
+      <div class="count-row">
+        <span class="count-label">Documentos requeridos</span>
+        <span class="count-val">7 docs</span>
+      </div>
+      <div class="tags">
+        <span class="tag">Nombre del ente</span>
+        <span class="tag">Estado</span>
+        <span class="tag">Municipio</span>
+        <span class="tag">Correo institucional</span>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <span>CSC Onboard Pro · Diseño en iteración</span>
+    <span>Fuente: <code>document-matrix.ts</code></span>
+  </footer>
+
+</body>
+</html>
