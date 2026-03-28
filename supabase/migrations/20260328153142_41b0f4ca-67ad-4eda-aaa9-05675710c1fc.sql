@@ -1,0 +1,1 @@
+UPDATE profiles SET status = 'onboarding_started' WHERE email = 'cliente2@otronodo.com';
