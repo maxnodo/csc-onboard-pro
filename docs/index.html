@@ -7,34 +7,10 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --bg: #f8f7f4;
-      --surface: #ffffff;
-      --border: rgba(0,0,0,0.10);
-      --border-hover: rgba(0,0,0,0.22);
-      --text-primary: #1a1a18;
-      --text-secondary: #5f5e5a;
-      --text-tertiary: #9c9a92;
-      --radius-lg: 14px;
-      --radius-md: 8px;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #1c1c1a;
-        --surface: #252523;
-        --border: rgba(255,255,255,0.10);
-        --border-hover: rgba(255,255,255,0.22);
-        --text-primary: #e8e6de;
-        --text-secondary: #a8a69e;
-        --text-tertiary: #6c6a62;
-      }
-    }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text-primary);
+      background: #ffffff;
+      color: #1a1a18;
       min-height: 100vh;
       padding: 48px 24px 64px;
     }
@@ -42,24 +18,34 @@
     header {
       max-width: 900px;
       margin: 0 auto 36px;
+      border-bottom: 1px solid #e8e6de;
+      padding-bottom: 20px;
     }
 
     header h1 {
       font-size: 22px;
       font-weight: 500;
-      color: var(--text-primary);
+      color: #1a1a18;
       margin-bottom: 6px;
     }
 
     header p {
-      font-size: 14px;
-      color: var(--text-secondary);
+      font-size: 13px;
+      color: #9c9a92;
+    }
+
+    header p code {
+      background: #f4f3ef;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #5f5e5a;
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 18px;
+      gap: 16px;
       max-width: 900px;
       margin: 0 auto;
     }
@@ -69,17 +55,16 @@
     }
 
     .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
+      background: #ffffff;
+      border: 1px solid #e8e6de;
+      border-radius: 12px;
       padding: 22px;
-      cursor: pointer;
-      transition: border-color .18s, box-shadow .18s;
+      transition: border-color .15s, box-shadow .15s;
     }
 
     .card:hover {
-      border-color: var(--border-hover);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border-color: #c8c6be;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
     }
 
     .badge {
@@ -88,26 +73,26 @@
       font-weight: 500;
       padding: 3px 10px;
       border-radius: 999px;
-      margin-bottom: 13px;
+      margin-bottom: 12px;
     }
 
     .card-title {
       font-size: 16px;
       font-weight: 500;
-      color: var(--text-primary);
-      margin-bottom: 4px;
+      color: #1a1a18;
+      margin-bottom: 3px;
     }
 
     .card-sub {
       font-size: 12px;
-      color: var(--text-secondary);
+      color: #9c9a92;
       margin-bottom: 16px;
       line-height: 1.5;
     }
 
     .divider {
       height: 1px;
-      background: var(--border);
+      background: #f0ede8;
       margin-bottom: 14px;
     }
 
@@ -115,7 +100,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .doc-item {
@@ -123,18 +108,18 @@
       align-items: center;
       gap: 8px;
       font-size: 12px;
-      color: var(--text-secondary);
+      color: #5f5e5a;
     }
 
     .doc-dot {
-      width: 5px;
-      height: 5px;
+      width: 4px;
+      height: 4px;
       border-radius: 50%;
       flex-shrink: 0;
     }
 
     .doc-item em {
-      color: var(--text-tertiary);
+      color: #b4b2a9;
       font-style: normal;
     }
 
@@ -142,10 +127,12 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #f0ede8;
     }
 
-    .count-label { font-size: 11px; color: var(--text-tertiary); }
+    .count-label { font-size: 11px; color: #b4b2a9; }
 
     .tags { display: flex; flex-wrap: wrap; gap: 5px; }
 
@@ -155,60 +142,46 @@
       font-weight: 500;
       padding: 2px 8px;
       border-radius: 5px;
+      background: #f4f3ef;
+      color: #5f5e5a;
     }
 
     /* Distribuidor — blue */
-    .c1 .badge     { background: #E6F1FB; color: #0C447C; }
-    .c1 .doc-dot   { background: #378ADD; }
-    .c1 .count-val { color: #185FA5; font-size: 12px; font-weight: 500; }
-    .c1 .tag       { background: #E6F1FB; color: #0C447C; }
-    @media (prefers-color-scheme: dark) {
-      .c1 .badge     { background: #0C447C; color: #B5D4F4; }
-      .c1 .count-val { color: #85B7EB; }
-      .c1 .tag       { background: #0C447C; color: #B5D4F4; }
-    }
+    .c1 .badge   { background: #EBF4FF; color: #1a56a0; }
+    .c1 .doc-dot { background: #3b8dd4; }
+    .c1 .count-val { color: #1a56a0; font-size: 12px; font-weight: 500; }
 
     /* Constructor — amber */
-    .c2 .badge     { background: #FAEEDA; color: #633806; }
-    .c2 .doc-dot   { background: #BA7517; }
-    .c2 .count-val { color: #854F0B; font-size: 12px; font-weight: 500; }
-    .c2 .tag       { background: #FAEEDA; color: #633806; }
-    @media (prefers-color-scheme: dark) {
-      .c2 .badge     { background: #633806; color: #FAC775; }
-      .c2 .count-val { color: #EF9F27; }
-      .c2 .tag       { background: #633806; color: #FAC775; }
-    }
+    .c2 .badge   { background: #FFF8EC; color: #8a5200; }
+    .c2 .doc-dot { background: #c88a1a; }
+    .c2 .count-val { color: #8a5200; font-size: 12px; font-weight: 500; }
 
-    /* Emprendedor — teal */
-    .c3 .badge     { background: #E1F5EE; color: #085041; }
-    .c3 .doc-dot   { background: #1D9E75; }
-    .c3 .count-val { color: #0F6E56; font-size: 12px; font-weight: 500; }
-    .c3 .tag       { background: #E1F5EE; color: #085041; }
-    @media (prefers-color-scheme: dark) {
-      .c3 .badge     { background: #085041; color: #9FE1CB; }
-      .c3 .count-val { color: #5DCAA5; }
-      .c3 .tag       { background: #085041; color: #9FE1CB; }
-    }
+    /* Emprendedor — green */
+    .c3 .badge   { background: #EDFAF4; color: #0a6640; }
+    .c3 .doc-dot { background: #1aaa70; }
+    .c3 .count-val { color: #0a6640; font-size: 12px; font-weight: 500; }
 
     /* Alcaldía — purple */
-    .c4 .badge     { background: #EEEDFE; color: #26215C; }
-    .c4 .doc-dot   { background: #7F77DD; }
-    .c4 .count-val { color: #534AB7; font-size: 12px; font-weight: 500; }
-    .c4 .tag       { background: #EEEDFE; color: #26215C; }
-    @media (prefers-color-scheme: dark) {
-      .c4 .badge     { background: #26215C; color: #CECBF6; }
-      .c4 .count-val { color: #AFA9EC; }
-      .c4 .tag       { background: #26215C; color: #CECBF6; }
-    }
+    .c4 .badge   { background: #F3F0FF; color: #3d34a0; }
+    .c4 .doc-dot { background: #7c72d8; }
+    .c4 .count-val { color: #3d34a0; font-size: 12px; font-weight: 500; }
 
     footer {
       max-width: 900px;
-      margin: 36px auto 0;
+      margin: 40px auto 0;
+      padding-top: 20px;
+      border-top: 1px solid #e8e6de;
       font-size: 11px;
-      color: var(--text-tertiary);
+      color: #b4b2a9;
       display: flex;
       justify-content: space-between;
-      align-items: center;
+    }
+
+    footer code {
+      background: #f4f3ef;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 11px;
     }
   </style>
 </head>
@@ -216,7 +189,7 @@
 
   <header>
     <h1>Tipos de cliente</h1>
-    <p>Categorías disponibles en el onboarding · datos de <code>src/lib/document-matrix.ts</code></p>
+    <p>Categorías disponibles en el onboarding · fuente: <code>document-matrix.ts</code></p>
   </header>
 
   <div class="grid">
