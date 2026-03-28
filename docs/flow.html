@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flujo de Onboarding — CSC Onboard Pro</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: #ffffff;
+      color: #1a1a18;
+      min-height: 100vh;
+      padding: 48px 24px 80px;
+    }
+
+    header {
+      max-width: 960px;
+      margin: 0 auto 36px;
+      border-bottom: 1px solid #e8e6de;
+      padding-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .header-left h1 { font-size: 22px; font-weight: 500; color: #1a1a18; margin-bottom: 4px; }
+    .header-left p  { font-size: 13px; color: #9c9a92; }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #5f5e5a;
+      background: #f4f3ef;
+      border: 1px solid #e8e6de;
+      border-radius: 8px;
+      padding: 8px 14px;
+      text-decoration: none;
+      transition: background .15s, border-color .15s;
+    }
+    .btn-back:hover { background: #eceae4; border-color: #c8c6be; }
+
+    /* Legend */
+    .legend {
+      max-width: 960px;
+      margin: 0 auto 32px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .leg-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #5f5e5a;
+    }
+    .leg-dot {
+      width: 10px; height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* Flow container */
+    .flow {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* Nodes */
+    .node {
+      width: 100%;
+      max-width: 480px;
+      border-radius: 10px;
+      border: 1px solid;
+      padding: 14px 18px;
+      position: relative;
+    }
+
+    .node-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .node-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+    .node-desc  { font-size: 12px; line-height: 1.5; }
+    .node-status {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-top: 6px;
+      font-family: monospace;
+    }
+
+    /* Arrow */
+    .arrow {
+      width: 2px;
+      height: 28px;
+      background: #d0cec8;
+      position: relative;
+    }
+    .arrow::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid #d0cec8;
+    }
+    .arrow-label {
+      font-size: 10px;
+      color: #9c9a92;
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      white-space: nowrap;
+    }
+
+    /* Decision diamond */
+    .decision-wrap {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .diamond {
+      width: 160px;
+      height: 60px;
+      background: #fff8ec;
+      border: 1.5px solid #e8c060;
+      transform: rotate(0deg);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: #7a5000;
+      text-align: center;
+      padding: 8px;
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      width: 180px;
+      height: 80px;
+    }
+
+    /* Branch row */
+    .branch-row {
+      width: 100%;
+      max-width: 860px;
+      display: grid;
+      gap: 16px;
+      margin: 0 auto;
+    }
+    .branch-row.two   { grid-template-columns: 1fr 1fr; }
+    .branch-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+    @media (max-width: 640px) {
+      .branch-row.two, .branch-row.three { grid-template-columns: 1fr; }
+    }
+
+    .branch-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .branch-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-bottom: 4px;
+    }
+
+    /* Node color variants */
+    /* default — gray */
+    .n-gray  { background: #f8f7f4; border-color: #e8e6de; }
+    .n-gray .node-label { color: #9c9a92; }
+    .n-gray .node-title { color: #1a1a18; }
+    .n-gray .node-desc  { color: #5f5e5a; }
+    .n-gray .node-status { background: #eceae4; color: #5f5e5a; }
+
+    /* blue — user action */
+    .n-blue  { background: #f0f6ff; border-color: #b8d4f4; }
+    .n-blue .node-label { color: #1a56a0; }
+    .n-blue .node-title { color: #0d3572; }
+    .n-blue .node-desc  { color: #3a6aaa; }
+    .n-blue .node-status { background: #daeafc; color: #1a56a0; }
+
+    /* amber — in progress */
+    .n-amber { background: #fffbf0; border-color: #f0d080; }
+    .n-amber .node-label { color: #8a5200; }
+    .n-amber .node-title { color: #5a3400; }
+    .n-amber .node-desc  { color: #7a5000; }
+    .n-amber .node-status { background: #fdeec8; color: #7a5000; }
+
+    /* green — success */
+    .n-green { background: #f0fbf4; border-color: #a0ddb8; }
+    .n-green .node-label { color: #0a6640; }
+    .n-green .node-title { color: #064428; }
+    .n-green .node-desc  { color: #1a8050; }
+    .n-green .node-status { background: #d0f0dc; color: #0a6640; }
+
+    /* red — rejected */
+    .n-red   { background: #fff5f5; border-color: #f0b8b8; }
+    .n-red .node-label { color: #9a2020; }
+    .n-red .node-title { color: #6a1010; }
+    .n-red .node-desc  { color: #8a2020; }
+    .n-red .node-status { background: #fcdcdc; color: #9a2020; }
+
+    /* purple — admin */
+    .n-purple { background: #f8f4ff; border-color: #c8b8f4; }
+    .n-purple .node-label { color: #4a34a0; }
+    .n-purple .node-title { color: #2e1e78; }
+    .n-purple .node-desc  { color: #5a44b0; }
+    .n-purple .node-status { background: #e8dcfc; color: #4a34a0; }
+
+    /* role badge */
+    .role {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-top: 6px;
+      margin-right: 4px;
+    }
+    .role-user   { background: #e8f0fc; color: #1a56a0; }
+    .role-admin  { background: #f0e8fc; color: #5a34a0; }
+    .role-approver { background: #e8fcf4; color: #0a6640; }
+
+    /* connector line between branch columns */
+    .h-line {
+      width: 100%;
+      max-width: 860px;
+      height: 1px;
+      background: #d0cec8;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      width: 100%;
+      max-width: 480px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #9c9a92;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    footer {
+      max-width: 960px;
+      margin: 48px auto 0;
+      padding-top: 20px;
+      border-top: 1px solid #e8e6de;
+      font-size: 11px;
+      color: #b4b2a9;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Flujo de onboarding</h1>
+    <p>Estados del usuario · roles · transiciones documentales</p>
+  </div>
+  <a href="index.html" class="btn-back">← Tipos de cliente</a>
+</header>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="leg-item"><span class="leg-dot" style="background:#daeafc;border:1px solid #b8d4f4"></span> Acción del usuario</div>
+  <div class="leg-item"><span class="leg-dot" style="background:#e8dcfc;border:1px solid #c8b8f4"></span> Acción del admin</div>
+  <div class="leg-item"><span class="leg-dot" style="background:#d0f0dc;border:1px solid #a0ddb8"></span> Estado aprobado</div>
+  <div class="leg-item"><span class="leg-dot" style="background:#fcdcdc;border:1px solid #f0b8b8"></span> Rechazo / error</div>
+  <div class="leg-item"><span class="leg-dot" style="background:#fdeec8;border:1px solid #f0d080"></span> En revisión</div>
+</div>
+
+<div class="flow">
+
+  <!-- 1. Registro -->
+  <div class="node n-blue">
+    <div class="node-label">Paso 1 · Usuario</div>
+    <div class="node-title">Registro</div>
+    <div class="node-desc">El usuario crea su cuenta con email y contraseña.</div>
+    <div><span class="node-status">pending_verification</span></div>
+    <div><span class="role role-user">user</span></div>
+  </div>
+
+  <div class="arrow" style="position:relative">
+    <span class="arrow-label">Confirma email</span>
+  </div>
+
+  <!-- 2. Verificación email -->
+  <div class="node n-blue">
+    <div class="node-label">Paso 2 · Usuario</div>
+    <div class="node-title">Verificación de email</div>
+    <div class="node-desc">El usuario confirma su correo electrónico. Se habilita el acceso al onboarding.</div>
+    <div><span class="node-status">onboarding_started</span></div>
+    <div><span class="role role-user">user</span></div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <!-- 3. Selección de categoría -->
+  <div class="node n-blue">
+    <div class="node-label">Paso 3 · Usuario</div>
+    <div class="node-title">Selección de categoría</div>
+    <div class="node-desc">El usuario elige su tipo. Determina la matriz documental requerida.</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
+      <span style="font-size:10px;background:#e8f0fc;color:#1a56a0;padding:2px 7px;border-radius:4px;font-weight:500">distribuidor</span>
+      <span style="font-size:10px;background:#fff8ec;color:#8a5200;padding:2px 7px;border-radius:4px;font-weight:500">constructor</span>
+      <span style="font-size:10px;background:#edfaf4;color:#0a6640;padding:2px 7px;border-radius:4px;font-weight:500">emprendedor</span>
+      <span style="font-size:10px;background:#f3f0ff;color:#3d34a0;padding:2px 7px;border-radius:4px;font-weight:500">alcaldia</span>
+    </div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <!-- 4. Información general -->
+  <div class="node n-blue">
+    <div class="node-label">Paso 4 · Usuario</div>
+    <div class="node-title">Información general</div>
+    <div class="node-desc">Formulario con datos del negocio según categoría (razón social, RIF, dirección, etc.). Se guarda en <code style="font-size:11px;background:#e8f0fc;padding:1px 4px;border-radius:3px">form_data</code> como JSONB.</div>
+    <div><span class="role role-user">user</span></div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <!-- 5. Documentación -->
+  <div class="node n-blue">
+    <div class="node-label">Paso 5 · Usuario</div>
+    <div class="node-title">Carga de documentos</div>
+    <div class="node-desc">El usuario sube los archivos requeridos según su categoría en formato <strong>PDF</strong>. Se generan automáticamente: Hoja de Consignación y Carta de Solicitud. Storage bucket: <code style="font-size:11px;background:#e8f0fc;padding:1px 4px;border-radius:3px">documents</code>.</div>
+    <div><span class="role role-user">user</span></div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <!-- 6. Confirmación -->
+  <div class="node n-blue">
+    <div class="node-label">Paso 6 · Usuario</div>
+    <div class="node-title">Confirmación y envío</div>
+    <div class="node-desc">El usuario revisa el resumen y confirma el envío del expediente.</div>
+    <div><span class="node-status">under_review</span></div>
+    <div><span class="role role-user">user</span></div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <!-- 7. Revisión Admin -->
+  <div class="node n-purple">
+    <div class="node-label">Paso 7 · Admin</div>
+    <div class="node-title">Revisión documental</div>
+    <div class="node-desc">El admin revisa cada documento individualmente. Puede aprobar o rechazar con motivo obligatorio.</div>
+    <div><span class="node-status">under_review</span></div>
+    <div><span class="role role-admin">admin</span></div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <!-- Decision: doc aprobado? -->
+  <div style="width:100%;max-width:860px;display:flex;flex-direction:column;align-items:center">
+    <div style="background:#fffbf0;border:1.5px solid #e8c060;border-radius:8px;padding:12px 20px;font-size:13px;font-weight:500;color:#7a5000;text-align:center;width:260px">
+      ¿Todos los docs obligatorios aprobados?
+    </div>
+  </div>
+
+  <div class="arrow" style="height:16px"></div>
+
+  <!-- Branch: aprobado vs rechazado -->
+  <div class="branch-row two" style="max-width:700px;margin:0 auto;width:100%">
+
+    <!-- Rechazado -->
+    <div class="branch-arrow">
+      <span class="branch-tag" style="background:#fcdcdc;color:#9a2020">No — doc rechazado</span>
+      <div class="arrow" style="height:20px"></div>
+      <div class="node n-red" style="max-width:100%">
+        <div class="node-label">Documento rechazado</div>
+        <div class="node-title">Re-subida requerida</div>
+        <div class="node-desc">El admin indica el motivo. El usuario recibe notificación y puede re-subir el documento. Estado del doc vuelve a <code style="font-size:10px">uploaded</code>.</div>
+        <div><span class="node-status">rejected (doc)</span></div>
+        <div style="margin-top:6px;font-size:10px;color:#9a2020">↩ Vuelve a revisión admin</div>
+      </div>
+    </div>
+
+    <!-- Aprobado -->
+    <div class="branch-arrow">
+      <span class="branch-tag" style="background:#d0f0dc;color:#0a6640">Sí — todos aprobados</span>
+      <div class="arrow" style="height:20px"></div>
+      <div class="node n-green" style="max-width:100%">
+        <div class="node-label">Paso 8 · Sistema</div>
+        <div class="node-title">Documentación aprobada</div>
+        <div class="node-desc">Todos los documentos obligatorios están aprobados. El sistema actualiza el estado automáticamente.</div>
+        <div><span class="node-status">approved_documentation</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="arrow" style="margin-top:8px"></div>
+
+  <!-- 8. Verificación presencial -->
+  <div class="node n-purple">
+    <div class="node-label">Paso 9 · Approver</div>
+    <div class="node-title">Verificación presencial</div>
+    <div class="node-desc">Un aprobador de sede realiza la verificación física del cliente.</div>
+    <div><span class="node-status">approved_documentation</span></div>
+    <div><span class="role role-approver">approver</span></div>
+  </div>
+
+  <div class="arrow" style="height:16px"></div>
+
+  <!-- Decision: verificación presencial -->
+  <div style="width:100%;max-width:860px;display:flex;flex-direction:column;align-items:center">
+    <div style="background:#fffbf0;border:1.5px solid #e8c060;border-radius:8px;padding:12px 20px;font-size:13px;font-weight:500;color:#7a5000;text-align:center;width:240px">
+      ¿Verificación presencial aprobada?
+    </div>
+  </div>
+
+  <div class="arrow" style="height:16px"></div>
+
+  <!-- Branch final -->
+  <div class="branch-row two" style="max-width:700px;margin:0 auto;width:100%">
+
+    <!-- Rechazado presencial -->
+    <div class="branch-arrow">
+      <span class="branch-tag" style="background:#fcdcdc;color:#9a2020">No</span>
+      <div class="arrow" style="height:20px"></div>
+      <div class="node n-red" style="max-width:100%">
+        <div class="node-label">Rechazo presencial</div>
+        <div class="node-title">Cliente rechazado</div>
+        <div class="node-desc">La verificación física no fue satisfactoria. El expediente queda bloqueado.</div>
+        <div><span class="node-status">rejected_presencial</span></div>
+        <div><span class="role role-approver">approver</span></div>
+      </div>
+    </div>
+
+    <!-- Activo final -->
+    <div class="branch-arrow">
+      <span class="branch-tag" style="background:#d0f0dc;color:#0a6640">Sí</span>
+      <div class="arrow" style="height:20px"></div>
+      <div class="node n-green" style="max-width:100%">
+        <div class="node-label">Estado final</div>
+        <div class="node-title">Cliente activo ✓</div>
+        <div class="node-desc">El cliente completó el proceso de onboarding satisfactoriamente.</div>
+        <div><span class="node-status">active_final</span></div>
+        <div><span class="role role-approver">approver</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Expiración -->
+  <div class="arrow" style="margin-top:24px"></div>
+  <div style="width:100%;max-width:480px;text-align:center;margin-bottom:4px">
+    <span style="font-size:11px;color:#9c9a92;font-weight:500">Caso especial · puede ocurrir desde approved_documentation</span>
+  </div>
+  <div class="node n-amber" style="max-width:480px">
+    <div class="node-label">Expiración</div>
+    <div class="node-title">Documentación expirada</div>
+    <div class="node-desc">Los documentos aprobados pueden expirar por tiempo. El usuario debe re-subir los documentos afectados para retomar el proceso.</div>
+    <div><span class="node-status">expired_documentation</span></div>
+    <div style="margin-top:6px;font-size:10px;color:#7a5000">↩ Vuelve a carga de documentos</div>
+  </div>
+
+</div>
+
+<footer>
+  <span>CSC Onboard Pro · Flujo de onboarding</span>
+  <span>4 roles · 8 estados · formato PDF obligatorio</span>
+</footer>
+
+</body>
+</html>
