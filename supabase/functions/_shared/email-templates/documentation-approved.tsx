@@ -64,7 +64,7 @@ const container = { padding: '30px 25px' }
 const brand = {
   fontSize: '20px',
   fontWeight: '700' as const,
-  color: '#1e3a5f',
+  color: '#CC1D21',
   margin: '0 0 8px',
   fontFamily: "'Playfair Display', Georgia, serif",
 }

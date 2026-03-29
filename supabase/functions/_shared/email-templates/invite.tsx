@@ -63,7 +63,7 @@ const container = { padding: '30px 25px' }
 const brand = {
   fontSize: '20px',
   fontWeight: '700' as const,
-  color: '#1e3a5f',
+  color: '#CC1D21',
   margin: '0 0 8px',
   fontFamily: "'Playfair Display', Georgia, serif",
 }
@@ -76,9 +76,9 @@ const h1 = {
 }
 const divider = { borderColor: '#d5dbe3', margin: '16px 0' }
 const text = { fontSize: '14px', color: '#5f6b7a', lineHeight: '1.6', margin: '0 0 20px' }
-const link = { color: '#1e3a5f', textDecoration: 'underline' }
+const link = { color: '#CC1D21', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#1e3a5f',
+  backgroundColor: '#CC1D21',
   color: '#f5f7fa',
   fontSize: '14px',
   fontWeight: '600' as const,
