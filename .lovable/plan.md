@@ -1,45 +1,41 @@
 
 
-## Plan: Agregar cintillo institucional al pie de todas las páginas (excepto login)
+## Plan: Reemplazar branding del login con logo institucional
 
-### Enfoque
+### Situacion actual
+La pagina Auth.tsx usa el icono `Building2` + texto "CSC" + "Corporacion Socialista de Cemento" como branding. Se reemplazara con las imagenes del logo real.
 
-Copiar la imagen al proyecto y crear un componente `InstitutionalFooter` reutilizable que se integre en los dos layouts principales: `AppLayout` (dashboard/admin) y `OnboardingLayout`.
+### Logica de uso de cada imagen
+- **Logo letras blancas** → panel izquierdo (fondo rojo `bg-primary`) - el blanco contrasta perfectamente
+- **Logo letras rojas** → version mobile (fondo claro) - el rojo se ve sobre fondo blanco
 
-### Archivos a modificar/crear
+### Archivos
 
-1. **Copiar imagen** → `src/assets/cintillo-header.png`
+1. **Copiar imagenes** al proyecto:
+   - `user-uploads://Logo_letras_blancas-2.png` → `src/assets/logo-letras-blancas.png`
+   - `user-uploads://Logo_letras_rojas.png` → `src/assets/logo-letras-rojas.png`
 
-2. **Crear `src/components/InstitutionalFooter.tsx`**
-   - Componente con fondo blanco, borde superior sutil, padding equilibrado
-   - Importa la imagen desde `@/assets/cintillo-header.png`
-   - Muestra la imagen centrada con `max-h` controlado para que sea elegante y no invasiva
-   - Texto pequeño opcional: "© 2026 Corporación Socialista de Cemento, S.A."
+2. **`src/pages/Auth.tsx`**
+   - Eliminar import de `Building2`
+   - Importar ambas imagenes desde `@/assets/`
+   - **Panel izquierdo (desktop):** reemplazar el bloque del icono + texto (lineas 74-81) por la imagen blanca centrada con `max-h-28` o similar. Mantener el titulo "Sistema de Registro y Onboarding Documental" y la descripcion debajo
+   - **Version mobile (lineas 99-105):** reemplazar `Building2` + texto por la imagen roja con `max-h-16`
+   - El fondo rojo y los efectos decorativos se mantienen intactos
 
-3. **Modificar `src/components/AppLayout.tsx`**
-   - Agregar `<InstitutionalFooter />` después del `<main>`, dentro del contenedor flex vertical
-
-4. **Modificar `src/pages/onboarding/OnboardingLayout.tsx`**
-   - Agregar `<InstitutionalFooter />` después del `<main>`
-
-### Diseño visual
+### Resultado visual (panel izquierdo)
 
 ```text
-┌─────────────────────────────────┐
-│  Contenido de la página         │
-│  ...                            │
-├─────────────────────────────────┤  ← borde sutil
-│  [cintillo institucional img]   │  ← centrado, altura ~40px
-│  © 2026 CSC, S.A.              │  ← texto copyright pequeño
-└─────────────────────────────────┘
+┌─────────────────────────┐
+│  [fondo rojo actual]    │
+│                         │
+│   [Logo blanco CSC]     │  ← imagen centrada, ~h-28
+│   Corp. Socialista...   │
+│                         │
+│   Sistema de Registro   │
+│   y Onboarding          │
+│   Documental            │
+│                         │
+│   Plataforma integral...│
+└─────────────────────────┘
 ```
-
-- Fondo: blanco (`bg-white`) con borde superior `border-t`
-- Imagen: centrada, `max-h-10` para mantener proporción profesional
-- El footer NO aparece en `Auth.tsx` (login) ya que Auth no usa ninguno de estos layouts
-
-### Técnico
-
-- La imagen se importa como módulo ES6 desde `src/assets/` para optimización de bundling
-- El componente es puro presentacional, sin lógica ni estado
 
