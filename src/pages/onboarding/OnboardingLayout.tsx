@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import InstitutionalFooter from "@/components/InstitutionalFooter";
 
 interface OnboardingLayoutProps {
   children: ReactNode;
@@ -93,7 +92,6 @@ const OnboardingLayout = ({ children, currentStep, title, description }: Onboard
         </div>
         {children}
       </main>
-      <InstitutionalFooter />
     </div>
   );
 };

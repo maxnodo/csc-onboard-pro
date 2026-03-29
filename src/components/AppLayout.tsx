@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/AppSidebar";
-import InstitutionalFooter from "@/components/InstitutionalFooter";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -27,7 +26,6 @@ const AppLayout = ({ children, title, description }: AppLayoutProps) => {
           <main className="flex-1 p-6 md:p-8 overflow-auto">
             {children}
           </main>
-          <InstitutionalFooter />
         </div>
       </div>
     </SidebarProvider>
