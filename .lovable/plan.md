@@ -1,60 +1,34 @@
 
 
-# Correccion: Validar documentos requeridos antes de auto-aprobar
+## Plan: Cambiar color primario azul (#1e3a5f) a rojo (#CC1D21)
 
-## Problema
-La logica de auto-aprobacion en `RequestReview.tsx` (linea 111) solo verifica que todos los documentos **subidos** esten aprobados. No valida que el usuario haya subido **todos los documentos requeridos** segun la matriz documental de su categoria.
+El color azul `#1e3a5f` se usa como color primario en toda la aplicación. `#CC1D21` en HSL es aproximadamente `358 82% 46%`. El cambio se aplicará en dos áreas:
 
-Ejemplo: Si la categoria requiere 5 documentos y el usuario solo subio 3, al aprobar esos 3 el sistema auto-aprueba porque "todos los documentos existentes estan aprobados".
+### 1. Variables CSS en `src/index.css`
 
-## Solucion
+Reemplazar las variables CSS que usan el azul por el nuevo rojo:
 
-### Cambio en `src/pages/admin/RequestReview.tsx`
+| Variable | Valor actual (azul) | Nuevo valor (rojo) |
+|---|---|---|
+| `--primary` (light) | `215 60% 28%` | `358 82% 46%` |
+| `--ring` (light) | `215 60% 28%` | `358 82% 46%` |
+| `--sidebar-background` | `215 25% 15%` | `358 50% 20%` |
+| `--sidebar-accent` | `215 30% 22%` | `358 45% 28%` |
+| `--sidebar-border` | `215 20% 25%` | `358 30% 25%` |
+| `--foreground` | `215 25% 15%` | `358 30% 15%` |
+| `--card-foreground` | `215 25% 15%` | `358 30% 15%` |
+| `--popover-foreground` | `215 25% 15%` | `358 30% 15%` |
 
-En la funcion `handleApproveDoc`, despues de aprobar un documento individual:
+Modo dark: ajustar equivalentes oscuros con la misma familia de tonos rojos.
 
-1. Obtener la lista de documentos requeridos (no condicionales) de `documentMatrixByCategory` usando la categoria del perfil del usuario
-2. Verificar que para **cada documento requerido** exista al menos un documento subido con estado "approved"
-3. Solo si el 100% de los requeridos estan cubiertos y aprobados, proceder con la auto-aprobacion
+### 2. Templates de email (6 archivos)
 
-### Cambios en la barra de progreso
+Reemplazar todas las ocurrencias de `#1e3a5f` por `#CC1D21` en:
+- `signup.tsx`, `invite.tsx`, `recovery.tsx`, `magic-link.tsx`, `email-change.tsx`, `reauthentication.tsx`, `documentation-approved.tsx`
 
-Actualmente la barra muestra `aprobados / subidos`. Deberia mostrar `aprobados / requeridos` para que el admin vea claramente cuantos faltan.
+Esto afecta el color del texto de marca, botones y enlaces en los correos.
 
-### Detalle tecnico
+### Resultado
 
-```
-// Importar documentMatrixByCategory (ya importado categoryLabels del mismo archivo)
-import { categoryLabels, documentMatrixByCategory } from "@/lib/document-matrix";
-
-// En handleApproveDoc, reemplazar la validacion actual:
-const updatedDocs = documents.map(d => d.id === docId ? {...d, status: "approved"} : d);
-const allApproved = updatedDocs.every(d => d.status === "approved");
-
-// Por esta validacion correcta:
-const category = profile?.category;
-const requirements = category ? documentMatrixByCategory[category] || [] : [];
-const requiredDocs = requirements.filter(r => !r.conditional);
-const updatedDocs = documents.map(d => d.id === docId ? {...d, status: "approved"} : d);
-
-const allRequiredApproved = requiredDocs.every(req => 
-  updatedDocs.some(d => d.document_type === req.key && d.status === "approved")
-);
-
-// Solo auto-aprobar si TODOS los requeridos tienen documento aprobado
-if (allRequiredApproved && requiredDocs.length > 0 && profile) { ... }
-```
-
-Para la barra de progreso, calcular contra requeridos:
-
-```
-const requiredDocs = requirements.filter(r => !r.conditional);
-const approvedCount = requiredDocs.filter(req => 
-  documents.some(d => d.document_type === req.key && d.status === "approved")
-).length;
-const progressPercent = requiredDocs.length > 0 ? (approvedCount / requiredDocs.length) * 100 : 0;
-```
-
-### Archivos a modificar
-- `src/pages/admin/RequestReview.tsx` - Agregar import de `documentMatrixByCategory`, corregir logica de auto-aprobacion y barra de progreso
+Todo el sistema (UI + emails) cambiará de azul corporativo a rojo `#CC1D21` manteniendo la misma estructura visual.
 
