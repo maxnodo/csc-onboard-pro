@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import logoBlanco from "@/assets/logo-letras-blancas.png";
+import logoRojo from "@/assets/logo-letras-rojas.png";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -71,14 +73,8 @@ const Auth = () => {
           <div className="absolute top-1/3 right-10 w-16 h-16 border border-primary-foreground/20 rounded-md -rotate-6" />
         </div>
         <div className="relative z-10 text-primary-foreground px-12 max-w-lg">
-          <div className="flex items-center gap-4 mb-10">
-            <div className="p-3 bg-primary-foreground/10 rounded-xl backdrop-blur-sm border border-primary-foreground/10">
-              <Building2 className="h-10 w-10" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">CSC</h1>
-              <p className="text-sm opacity-70 font-sans tracking-wide uppercase">Corporación Socialista de Cemento</p>
-            </div>
+          <div className="flex justify-center mb-10">
+            <img src={logoBlanco} alt="CSC - Corporación Socialista de Cemento" className="max-h-28 w-auto object-contain" />
           </div>
 
           <div className="space-y-6">
@@ -96,12 +92,8 @@ const Auth = () => {
       {/* Right panel - form */}
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md">
-          <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <Building2 className="h-10 w-10 text-primary" />
-            <div>
-              <h1 className="text-2xl font-bold text-primary">CSC</h1>
-              <p className="text-xs text-muted-foreground">Corporación Socialista de Cemento</p>
-            </div>
+          <div className="lg:hidden flex justify-center mb-8">
+            <img src={logoRojo} alt="CSC - Corporación Socialista de Cemento" className="max-h-16 w-auto object-contain" />
           </div>
 
           <Card className="border-0 shadow-lg">
