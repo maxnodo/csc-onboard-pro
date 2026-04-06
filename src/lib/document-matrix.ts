@@ -38,6 +38,7 @@ export const documentMatrixByCategory: Record<string, DocumentRequirement[]> = {
     ...commonGenerated,
     file("acta_constitutiva", "Acta Constitutiva / Registro Mercantil"),
     file("declaracion_islr_iva", "Declaración ISLR / IVA"),
+    file("acta_asamblea", "Última Acta de Asamblea", { conditional: true, conditionalLabel: "Si aplica" }),
     file("cedula_accionistas", "Cédula de Accionistas"),
     file("rif_empresa", "RIF Empresa"),
     file("rif_accionistas", "RIF Accionistas"),
@@ -49,6 +50,7 @@ export const documentMatrixByCategory: Record<string, DocumentRequirement[]> = {
     ...commonGenerated,
     file("acta_constitutiva", "Acta Constitutiva / Registro Mercantil"),
     file("declaracion_islr_iva", "Declaración ISLR / IVA"),
+    file("acta_asamblea", "Última Acta de Asamblea", { conditional: true, conditionalLabel: "Si aplica" }),
     file("cedula_accionistas", "Cédula de Accionistas"),
     file("rif_empresa_accionistas", "RIF Empresa y Accionistas"),
     file("registro_fotografico", "Registro Fotográfico", { multiple: true }),
@@ -103,6 +105,7 @@ export const formFieldsByCategory: Record<string, FormFieldDefinition[]> = {
   emprendedor: [
     ff("nombre_completo", "Nombre Completo", "text", true),
     ff("cedula", "Número de Cédula", "text", true),
+    ff("rif", "RIF", "text", true, "V-12345678-9"),
     ff("direccion", "Dirección", "textarea", true),
     ff("telefono", "Teléfono", "tel", true),
     ff("correo", "Correo Electrónico", "email", true),
@@ -110,6 +113,7 @@ export const formFieldsByCategory: Record<string, FormFieldDefinition[]> = {
   ],
   alcaldia: [
     ff("nombre_ente", "Nombre del Ente", "text", true),
+    ff("rif_institucional", "RIF Institucional", "text", true, "G-20012345-0"),
     ff("estado", "Estado", "text", true),
     ff("municipio", "Municipio", "text", true),
     ff("direccion_administrativa", "Dirección Administrativa", "textarea", true),
