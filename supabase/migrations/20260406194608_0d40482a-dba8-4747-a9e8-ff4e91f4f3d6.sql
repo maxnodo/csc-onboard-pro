@@ -1,0 +1,2 @@
+UPDATE profiles SET category = NULL, onboarding_step = 0 WHERE email = 'luis@otronodo.com';
+DELETE FROM form_data WHERE user_id = (SELECT id FROM profiles WHERE email = 'luis@otronodo.com') AND category = 'distribuidor';
