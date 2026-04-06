@@ -24,6 +24,7 @@ const ApproverPanel = () => {
   const { toast } = useToast();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [sedes, setSedes] = useState<Sede[]>([]);
+  const [formDataMap, setFormDataMap] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -54,8 +55,25 @@ const ApproverPanel = () => {
         .order("approved_documentation_at", { ascending: true }),
       supabase.from("sedes").select("*").eq("activa", true),
     ]);
-    setProfiles(profilesRes.data || []);
+    const loadedProfiles = profilesRes.data || [];
+    setProfiles(loadedProfiles);
     setSedes(sedesRes.data || []);
+
+    // Load form_data for RIF lookup
+    if (loadedProfiles.length > 0) {
+      const userIds = loadedProfiles.map((p) => p.id);
+      const { data: formRows } = await supabase
+        .from("form_data")
+        .select("user_id, form_data")
+        .in("user_id", userIds);
+      const map: Record<string, any> = {};
+      formRows?.forEach((row) => {
+        map[row.user_id] = row.form_data;
+      });
+      setFormDataMap(map);
+    } else {
+      setFormDataMap({});
+    }
     setLoading(false);
   };
 
@@ -74,12 +92,20 @@ const ApproverPanel = () => {
     return diff;
   };
 
+  const getRif = (userId: string) => {
+    const fd = formDataMap[userId];
+    if (!fd) return null;
+    return (fd as any).rif || (fd as any).rif_institucional || null;
+  };
+
   const filtered = profiles.filter((p) => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
+    const rif = getRif(p.id);
     return (
       p.email?.toLowerCase().includes(term) ||
-      p.full_name?.toLowerCase().includes(term)
+      p.full_name?.toLowerCase().includes(term) ||
+      (rif && rif.toLowerCase().includes(term))
     );
   });
 
@@ -204,6 +230,7 @@ const ApproverPanel = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Solicitante</TableHead>
+                <TableHead>RIF</TableHead>
                 <TableHead>Categoría</TableHead>
                 <TableHead>Sede Asignada</TableHead>
                 <TableHead>Días Restantes</TableHead>
@@ -212,17 +239,21 @@ const ApproverPanel = () => {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Cargando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Cargando...</TableCell></TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No hay usuarios pendientes de verificación presencial</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No hay usuarios pendientes de verificación presencial</TableCell></TableRow>
               ) : (
                 filtered.map((p) => {
                   const days = getDaysRemaining(p.approved_documentation_at);
+                  const rif = getRif(p.id);
                   return (
                     <TableRow key={p.id}>
                       <TableCell>
                         <p className="font-medium font-sans text-sm">{p.full_name || "Sin nombre"}</p>
                         <p className="text-xs text-muted-foreground">{p.email}</p>
+                      </TableCell>
+                      <TableCell className="text-sm font-sans font-mono">
+                        {rif || "—"}
                       </TableCell>
                       <TableCell className="text-sm font-sans">
                         {p.category ? categoryLabels[p.category] : "—"}
