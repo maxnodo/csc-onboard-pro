@@ -246,13 +246,14 @@ const ApproverPanel = () => {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Cargando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Cargando...</TableCell></TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No hay usuarios pendientes de verificación presencial</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No hay usuarios pendientes de verificación presencial</TableCell></TableRow>
               ) : (
                 filtered.map((p) => {
                   const days = getDaysRemaining(p.approved_documentation_at);
                   const rif = getRif(p.id);
+                  const subcategoria = getSubcategoria(p.id);
                   return (
                     <TableRow key={p.id}>
                       <TableCell>
@@ -264,6 +265,9 @@ const ApproverPanel = () => {
                       </TableCell>
                       <TableCell className="text-sm font-sans">
                         {p.category ? categoryLabels[p.category] : "—"}
+                      </TableCell>
+                      <TableCell className="text-sm font-sans">
+                        {subcategoria || "—"}
                       </TableCell>
                       <TableCell className="text-sm font-sans">
                         {getSedeNameById(p.sede_id)}
