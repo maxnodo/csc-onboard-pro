@@ -92,12 +92,20 @@ const ApproverPanel = () => {
     return diff;
   };
 
+  const getRif = (userId: string) => {
+    const fd = formDataMap[userId];
+    if (!fd) return null;
+    return (fd as any).rif || (fd as any).rif_institucional || null;
+  };
+
   const filtered = profiles.filter((p) => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
+    const rif = getRif(p.id);
     return (
       p.email?.toLowerCase().includes(term) ||
-      p.full_name?.toLowerCase().includes(term)
+      p.full_name?.toLowerCase().includes(term) ||
+      (rif && rif.toLowerCase().includes(term))
     );
   });
 
