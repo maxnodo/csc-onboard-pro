@@ -1,0 +1,1 @@
+UPDATE profiles SET status = 'onboarding_started', approved_documentation_at = NULL WHERE email = 'luis@otronodo.com';
