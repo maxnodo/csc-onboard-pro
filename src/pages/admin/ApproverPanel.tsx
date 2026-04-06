@@ -98,6 +98,12 @@ const ApproverPanel = () => {
     return (fd as any).rif || (fd as any).rif_institucional || null;
   };
 
+  const getSubcategoria = (userId: string) => {
+    const fd = formDataMap[userId];
+    if (!fd) return null;
+    return (fd as any).subcategoria_distribuidor || null;
+  };
+
   const filtered = profiles.filter((p) => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
