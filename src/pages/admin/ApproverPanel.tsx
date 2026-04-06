@@ -24,6 +24,7 @@ const ApproverPanel = () => {
   const { toast } = useToast();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [sedes, setSedes] = useState<Sede[]>([]);
+  const [formDataMap, setFormDataMap] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
