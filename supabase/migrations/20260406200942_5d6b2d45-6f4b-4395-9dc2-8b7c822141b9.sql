@@ -1,0 +1,1 @@
+UPDATE profiles SET status = 'approved_documentation', approved_documentation_at = now() WHERE email = 'luis@otronodo.com';
