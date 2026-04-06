@@ -1,0 +1,1 @@
+ALTER TABLE public.form_data ADD CONSTRAINT form_data_user_id_category_key UNIQUE (user_id, category);
