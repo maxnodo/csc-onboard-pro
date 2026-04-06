@@ -98,6 +98,12 @@ const ApproverPanel = () => {
     return (fd as any).rif || (fd as any).rif_institucional || null;
   };
 
+  const getSubcategoria = (userId: string) => {
+    const fd = formDataMap[userId];
+    if (!fd) return null;
+    return (fd as any).subcategoria_distribuidor || null;
+  };
+
   const filtered = profiles.filter((p) => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
@@ -232,6 +238,7 @@ const ApproverPanel = () => {
                 <TableHead>Solicitante</TableHead>
                 <TableHead>RIF</TableHead>
                 <TableHead>Categoría</TableHead>
+                <TableHead>Subcategoría</TableHead>
                 <TableHead>Sede Asignada</TableHead>
                 <TableHead>Días Restantes</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -239,13 +246,14 @@ const ApproverPanel = () => {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Cargando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Cargando...</TableCell></TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No hay usuarios pendientes de verificación presencial</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No hay usuarios pendientes de verificación presencial</TableCell></TableRow>
               ) : (
                 filtered.map((p) => {
                   const days = getDaysRemaining(p.approved_documentation_at);
                   const rif = getRif(p.id);
+                  const subcategoria = getSubcategoria(p.id);
                   return (
                     <TableRow key={p.id}>
                       <TableCell>
@@ -257,6 +265,9 @@ const ApproverPanel = () => {
                       </TableCell>
                       <TableCell className="text-sm font-sans">
                         {p.category ? categoryLabels[p.category] : "—"}
+                      </TableCell>
+                      <TableCell className="text-sm font-sans">
+                        {subcategoria || "—"}
                       </TableCell>
                       <TableCell className="text-sm font-sans">
                         {getSedeNameById(p.sede_id)}
