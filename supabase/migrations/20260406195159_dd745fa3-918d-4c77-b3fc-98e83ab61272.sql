@@ -1,0 +1,1 @@
+UPDATE profiles SET category = NULL, onboarding_step = 0 WHERE email = 'luis@otronodo.com';
