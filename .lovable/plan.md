@@ -1,39 +1,22 @@
 
 
-## Plan: Subcategoría de Distribuidor en CategorySelection
+## Plan: Búsqueda por RIF en el Panel del Aprobador
 
-### Comportamiento
+### Problema
+El RIF se almacena en `form_data.form_data` (JSONB), no en `profiles`. La consulta actual solo carga `profiles`, por lo que no tiene acceso al RIF para filtrar.
 
-Cuando el usuario hace clic en "Distribuidor", en lugar de ir directo al onboarding, la pantalla cambia a un segundo paso mostrando 5 opciones de tipo. Las otras 3 categorías siguen funcionando igual (clic → onboarding).
+### Cambios en `src/pages/admin/ApproverPanel.tsx`
 
-### Archivo a modificar
+1. **Cargar form_data junto con profiles**: Después de obtener los profiles, hacer una segunda consulta a `form_data` para todos los `user_id` de esos profiles (categoría `distribuidor`, `constructor`, etc.). Almacenar en un `Map<userId, formData>`.
 
-**Solo `src/pages/onboarding/CategorySelection.tsx`**
+2. **Extender el filtro de búsqueda**: En la función `filtered`, además de buscar en `email` y `full_name`, buscar en el campo `rif` (o `rif_institucional`) del `formData` correspondiente al usuario.
 
-### Lógica
+3. **Mostrar RIF en la tabla**: Agregar una columna "RIF" a la tabla que muestre el valor extraído del `form_data` de cada usuario. Si no tiene RIF, mostrar "—".
 
-1. Agregar estado local `selectedCategory` (inicialmente `null`).
-2. Al hacer clic en una categoría:
-   - Si **no es** `distribuidor`: ejecutar `handleSelect` como ahora (update profile → navigate).
-   - Si **es** `distribuidor`: setear `selectedCategory = "distribuidor"` para mostrar el segundo paso.
-3. Segundo paso — se reemplaza el grid de categorías por:
-   - Título: "Seleccione el tipo de Distribuidor"
-   - 5 tarjetas con las opciones:
-     - Distribuidor Minorista
-     - Ferretería
-     - Bloquera
-     - Transformador
-     - Concretos Premezclados / Firmas Personales
-   - Botón "Volver" para regresar al paso de categorías (`selectedCategory = null`).
-4. Al seleccionar un tipo:
-   - Upsert en `form_data` con `{ subcategoria_distribuidor: "valor_seleccionado" }` para el usuario.
-   - Luego ejecutar el `handleSelect("distribuidor")` existente (update profile → navigate).
+### Detalle técnico
 
-### Persistencia
-
-Se guarda en la tabla `form_data` existente. Si ya existe un registro para el usuario con categoría `distribuidor`, se hace update del campo JSONB; si no existe, se inserta uno nuevo. La clave dentro del JSON es `subcategoria_distribuidor` con el texto plano de la opción elegida.
-
-### UI
-
-Misma estructura visual que las tarjetas de categoría. Cada opción usa un icono apropiado de Lucide. El botón "Volver" aparece arriba del grid con una flecha izquierda.
+- Nuevo estado: `formDataMap` (`Record<string, any>`).
+- En `loadData`, después de obtener profiles, consultar `form_data` filtrando por los `user_id` obtenidos.
+- El RIF puede estar bajo la clave `rif` o `rif_institucional` dependiendo de la categoría; se busca en ambos.
+- No requiere cambios en la base de datos.
 
