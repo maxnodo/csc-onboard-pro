@@ -230,6 +230,7 @@ const ApproverPanel = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Solicitante</TableHead>
+                <TableHead>RIF</TableHead>
                 <TableHead>Categoría</TableHead>
                 <TableHead>Sede Asignada</TableHead>
                 <TableHead>Días Restantes</TableHead>
