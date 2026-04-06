@@ -55,8 +55,25 @@ const ApproverPanel = () => {
         .order("approved_documentation_at", { ascending: true }),
       supabase.from("sedes").select("*").eq("activa", true),
     ]);
-    setProfiles(profilesRes.data || []);
+    const loadedProfiles = profilesRes.data || [];
+    setProfiles(loadedProfiles);
     setSedes(sedesRes.data || []);
+
+    // Load form_data for RIF lookup
+    if (loadedProfiles.length > 0) {
+      const userIds = loadedProfiles.map((p) => p.id);
+      const { data: formRows } = await supabase
+        .from("form_data")
+        .select("user_id, form_data")
+        .in("user_id", userIds);
+      const map: Record<string, any> = {};
+      formRows?.forEach((row) => {
+        map[row.user_id] = row.form_data;
+      });
+      setFormDataMap(map);
+    } else {
+      setFormDataMap({});
+    }
     setLoading(false);
   };
 
