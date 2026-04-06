@@ -1,0 +1,1 @@
+UPDATE profiles SET category = 'distribuidor', onboarding_step = 1 WHERE email = 'luis@otronodo.com';
