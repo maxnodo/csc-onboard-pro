@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { documentMatrixByCategory, categoryLabels } from "@/lib/document-matrix";
 import { generateHojaConsignacion } from "@/lib/generate-hoja-consignacion";
+import { generateCartaSolicitud } from "@/lib/generate-carta-solicitud";
 import OnboardingLayout from "./OnboardingLayout";
 import { Upload, FileText, CheckCircle2, Clock, ArrowLeft, ArrowRight, Download, X } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
@@ -169,36 +170,41 @@ const Step2Documentation = () => {
       return;
     }
 
-    // Carta de solicitud — keep as .txt
-    const title = "CARTA DE SOLICITUD";
-    const content = `
-CORPORACIÓN SOCIALISTA DE CEMENTO (CSC)
-${title}
+    // Carta de solicitud — PDF
+    try {
+      const { data: formDataRow } = await supabase
+        .from("form_data")
+        .select("form_data")
+        .eq("user_id", user!.id)
+        .eq("category", category!)
+        .maybeSingle();
 
-Fecha: ${new Date().toLocaleDateString("es-VE")}
-Categoría: ${category ? categoryLabels[category] : ""}
-Solicitante: ${profile?.full_name || ""}
-Correo: ${profile?.email || ""}
+      const fd = (formDataRow?.form_data as Record<string, any>) || {};
 
-Este documento ha sido generado automáticamente por el Sistema de Onboarding Documental de CSC.
-El solicitante debe imprimir, firmar y volver a cargar este documento firmado.
+      let razonSocial = "";
+      if (category === "distribuidor" || category === "constructor") {
+        razonSocial = fd.razon_social || "";
+      } else if (category === "emprendedor") {
+        razonSocial = fd.nombre_completo || "";
+      } else if (category === "alcaldia") {
+        razonSocial = fd.nombre_ente || "";
+      }
 
-_________________________
-Firma del Solicitante
+      await generateCartaSolicitud({
+        razonSocial,
+        rif: fd.rif || fd.rif_institucional || "",
+        representanteLegal: fd.representante_legal || profile?.full_name || "",
+        cedulaRepresentante: fd.cedula || "",
+        celular: profile?.phone || fd.telefono || "",
+        correo: profile?.email || fd.correo || fd.correo_institucional || "",
+        category: category!,
+        categoryLabel: category ? categoryLabels[category] : "",
+      });
 
-_________________________
-Nombre y Cédula
-    `.trim();
-
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${title.replace(/ /g, "_")}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    toast({ title: "Documento generado", description: "Descargue, firme y vuelva a cargar el documento firmado." });
+      toast({ title: "PDF generado", description: "Descargue, firme, selle y vuelva a cargar el documento." });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
   };
 
   const allRequired = requirements.filter((r) => !r.conditional);
