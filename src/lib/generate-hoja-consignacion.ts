@@ -15,8 +15,27 @@ interface HojaData {
   categoryLabel: string;
 }
 
-export function generateHojaConsignacion(data: HojaData) {
+export async function generateHojaConsignacion(data: HojaData) {
+  const [
+    { robotoRegularBase64 },
+    { robotoBoldBase64 },
+    { robotoItalicBase64 },
+  ] = await Promise.all([
+    import("./fonts/roboto-regular"),
+    import("./fonts/roboto-bold"),
+    import("./fonts/roboto-italic"),
+  ]);
+
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter" });
+
+  // Register Roboto fonts
+  doc.addFileToVFS("Roboto-Regular.ttf", robotoRegularBase64);
+  doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
+  doc.addFileToVFS("Roboto-Bold.ttf", robotoBoldBase64);
+  doc.addFont("Roboto-Bold.ttf", "Roboto", "bold");
+  doc.addFileToVFS("Roboto-Italic.ttf", robotoItalicBase64);
+  doc.addFont("Roboto-Italic.ttf", "Roboto", "italic");
+
   const pageW = doc.internal.pageSize.getWidth();
   const marginL = 15;
   const marginR = 15;
