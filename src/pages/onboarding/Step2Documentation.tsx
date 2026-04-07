@@ -148,7 +148,7 @@ const Step2Documentation = () => {
           }
         }
 
-        generateHojaConsignacion({
+        await generateHojaConsignacion({
           razonSocial,
           rif,
           representanteLegal: fd.representante_legal || profile?.full_name || "",
