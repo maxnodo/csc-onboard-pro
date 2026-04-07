@@ -59,7 +59,7 @@ export async function generateHojaConsignacion(data: HojaData) {
   };
 
   const sectionTitle = (title: string) => {
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Roboto", "bold");
     doc.setFontSize(8);
     doc.setFillColor(220, 220, 220);
     doc.rect(marginL, y, contentW, 6, "F");
@@ -73,10 +73,10 @@ export async function generateHojaConsignacion(data: HojaData) {
     for (const f of fields) {
       const w = f.width * contentW;
       drawBox(x, y, w, rowH);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Roboto", "bold");
       doc.setFontSize(6.5);
       doc.text(f.label, x + 1.5, y + 3);
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Roboto", "normal");
       doc.setFontSize(8);
       doc.text(f.value || "", x + 1.5, y + 6.5);
       x += w;
@@ -85,7 +85,7 @@ export async function generateHojaConsignacion(data: HojaData) {
   };
 
   // ===================== HEADER =====================
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Roboto", "bold");
   doc.setFontSize(11);
   doc.text("CORPORACIÓN SOCIALISTA DEL CEMENTO, S.A.", pageW / 2, y, { align: "center" });
   y += 5;
@@ -145,13 +145,13 @@ export async function generateHojaConsignacion(data: HojaData) {
     const checkmark = isChecked ? "[X]" : "[  ]";
 
     drawBox(marginL, y, contentW, checkH);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Roboto", "normal");
     doc.setFontSize(7.5);
 
     doc.setFont("courier", "normal");
     doc.text(checkmark, marginL + 2, y + 3.8);
 
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Roboto", "normal");
     let label = req.label.replace(/≤/g, "<=");
     if (req.conditional && req.conditionalLabel) {
       label += ` (${req.conditionalLabel})`;
@@ -165,7 +165,7 @@ export async function generateHojaConsignacion(data: HojaData) {
   // ===================== SECCIÓN 4 =====================
   sectionTitle("SECCIÓN 4 — FIRMA DEL REPRESENTANTE LEGAL");
 
-  doc.setFont("helvetica", "italic");
+  doc.setFont("Roboto", "italic");
   doc.setFontSize(7);
   doc.text(
     "IMPORTANTE: Debe ser llenada por el representante legal de la empresa, firmada y con sello húmedo.",
