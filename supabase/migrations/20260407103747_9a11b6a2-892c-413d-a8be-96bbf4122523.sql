@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN last_folder_download_at timestamptz DEFAULT NULL;

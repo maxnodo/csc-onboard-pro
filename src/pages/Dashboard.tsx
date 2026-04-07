@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle2, XCircle, AlertTriangle, FileWarning, Upload, Loader2, ChevronLeft, ChevronRight, ShieldCheck, FileX, FileText, Download } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, AlertTriangle, FileWarning, Upload, Loader2, ChevronLeft, ChevronRight, ShieldCheck, FileX, FileText, Download, FolderDown, MapPin, Info } from "lucide-react";
 import { categoryLabels, documentMatrixByCategory } from "@/lib/document-matrix";
 import AppLayout from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +26,7 @@ const statusDescriptions: Record<string, string> = {
   pending_verification: "Su cuenta está pendiente de verificación. Pronto recibirá una actualización.",
   onboarding_started: "Su proceso de onboarding está en progreso. Complete los pasos pendientes.",
   under_review: "Su documentación está siendo revisada por el equipo administrativo de CSC.",
-  approved_documentation: "Su documentación ha sido aprobada. Debe presentarse en la sede asignada para completar el proceso.",
+  approved_documentation: "Su documentación ha sido aprobada. Ya es usuario verificado, pero para ser cliente con poder de compra debe completar el trámite presencial en sede.",
   active_final: "Su proceso ha sido completado exitosamente. Ya puede operar con CSC.",
   rejected: "Su solicitud ha sido rechazada. Revise los documentos con observaciones abajo.",
   rejected_presencial: "Su solicitud fue rechazada presencialmente. Contacte al administrador.",
@@ -41,6 +41,7 @@ const Dashboard = () => {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState<string | null>(null);
   const [page, setPage] = useState(0);
+  const [downloadingFolder, setDownloadingFolder] = useState(false);
 
   const { data: allDocs } = useQuery({
     queryKey: ["user-documents", user?.id],
@@ -56,9 +57,23 @@ const Dashboard = () => {
     enabled: !!user?.id,
   });
 
+  // Fetch sede info when approved
+  const { data: sedeInfo } = useQuery({
+    queryKey: ["sede-info", profile?.sede_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sedes")
+        .select("nombre, estado_ubicacion")
+        .eq("id", profile!.sede_id!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.sede_id && profile?.status === "approved_documentation",
+  });
+
   const rejectedDocs = allDocs?.filter((d) => d.status === "rejected") || [];
 
-  // Calculate missing required documents
   const category = profile?.category;
   const requirements = category ? documentMatrixByCategory[category] || [] : [];
   const requiredDocs = requirements.filter((r) => !r.conditional);
@@ -66,6 +81,24 @@ const Dashboard = () => {
     (req) => !allDocs?.some((d) => d.document_type === req.key)
   );
   const canUploadMore = profile?.status === "under_review" || profile?.status === "rejected";
+
+  const handleDownloadFolder = async () => {
+    setDownloadingFolder(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-client-folder");
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        // Refresh profile to get updated last_folder_download_at
+        queryClient.invalidateQueries({ queryKey: ["profile"] });
+        toast({ title: "Carpeta generada", description: "La descarga se abrirá en una nueva pestaña." });
+      }
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "No se pudo generar la carpeta.", variant: "destructive" });
+    } finally {
+      setDownloadingFolder(false);
+    }
+  };
 
   const handleUploadNew = async (docType: string, file: File) => {
     if (!user || !category) return;
@@ -225,6 +258,18 @@ Nombre y Cédula
   };
   const progressValue = progressMap[profile.status] ?? 10;
 
+  const isApprovedDocumentation = profile.status === "approved_documentation";
+
+  const lastDownload = profile.last_folder_download_at
+    ? new Date(profile.last_folder_download_at).toLocaleDateString("es-VE", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+
   return (
     <AppLayout title="Estado de su Solicitud" description={profile.category ? categoryLabels[profile.category] : "Sin categoría asignada"}>
       <div className="max-w-2xl space-y-6">
@@ -249,6 +294,80 @@ Nombre y Cédula
             </div>
           </CardContent>
         </Card>
+
+        {/* Approved Documentation — Download & Instructions */}
+        {isApprovedDocumentation && (
+          <>
+            {/* Download Card */}
+            <Card className="border-success/30 overflow-hidden">
+              <CardHeader className="pb-2 pt-5 px-6">
+                <CardTitle className="text-base flex items-center gap-2 text-success">
+                  <FolderDown className="h-5 w-5" />
+                  Carpeta de Presentación
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-6 pb-5 space-y-4">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Descargue su carpeta con todos los documentos aprobados en el orden oficial. Imprima el contenido y preséntelo en la sede asignada.
+                </p>
+                <div className="flex items-center gap-4">
+                  <Button
+                    onClick={handleDownloadFolder}
+                    disabled={downloadingFolder}
+                    className="gap-2"
+                  >
+                    {downloadingFolder ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> Generando...</>
+                    ) : (
+                      <><Download className="h-4 w-4" /> Descargar carpeta (ZIP)</>
+                    )}
+                  </Button>
+                  {lastDownload && (
+                    <span className="text-xs text-muted-foreground">
+                      Última descarga: {lastDownload}
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Instructions Card */}
+            <Card>
+              <CardHeader className="pb-2 pt-5 px-6">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Info className="h-5 w-5" />
+                  Instrucciones para la Visita Presencial
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-6 pb-5 space-y-4">
+                <ol className="list-decimal list-inside space-y-3 text-sm text-muted-foreground leading-relaxed">
+                  <li>Carpeta marrón tamaño oficio con los documentos impresos en el orden del ZIP</li>
+                  <li>Numerar todas las hojas en el cuadrante superior derecho en tinta negra, excepto la Hoja de Consignación</li>
+                  <li>Colocar separadores entre documentos identificados con el nombre del documento</li>
+                  <li>La Hoja de Consignación va primera, sin numerar, firmada y sellada</li>
+                  <li>Documentos sujetos con gancho N° 22 en el margen izquierdo interno</li>
+                  <li>Presentarse en la sede asignada con la carpeta y el RIF del representante legal</li>
+                </ol>
+
+                {/* Sede info */}
+                <div className="pt-3 border-t">
+                  {profile.sede_id && sedeInfo ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="h-4 w-4 text-primary shrink-0" />
+                      <span className="font-medium">Sede asignada:</span>
+                      <span className="text-muted-foreground">{sedeInfo.nombre} — {sedeInfo.estado_ubicacion}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm text-warning">
+                      <AlertTriangle className="h-4 w-4 shrink-0" />
+                      <span>No tiene sede asignada. Contacte al administrador para que le asignen una sede antes de presentarse.</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
 
         {/* Missing Documents - Upload Section */}
         {canUploadMore && missingDocs.length > 0 && (
