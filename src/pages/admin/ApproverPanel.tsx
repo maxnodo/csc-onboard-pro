@@ -312,8 +312,13 @@ const ApproverPanel = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Activación Final</DialogTitle>
-            <DialogDescription>
-              Confirme la verificación presencial de <strong>{selectedProfile?.full_name || selectedProfile?.email}</strong>
+            <DialogDescription asChild>
+              <div className="text-sm text-muted-foreground">
+                Confirme la verificación presencial de <strong>{selectedProfile?.full_name || selectedProfile?.email}</strong>
+                {selectedProfile && getRif(selectedProfile.id) && (
+                  <div className="mt-1 font-mono text-sm">RIF: {getRif(selectedProfile.id)}</div>
+                )}
+              </div>
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
