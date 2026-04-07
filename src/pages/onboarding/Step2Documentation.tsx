@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { documentMatrixByCategory, categoryLabels } from "@/lib/document-matrix";
+import { generateHojaConsignacion } from "@/lib/generate-hoja-consignacion";
 import OnboardingLayout from "./OnboardingLayout";
 import { Upload, FileText, CheckCircle2, Clock, ArrowLeft, ArrowRight, Download, X } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
@@ -114,9 +115,62 @@ const Step2Documentation = () => {
 
   const getDocsForType = (docType: string) => documents.filter((d) => d.document_type === docType);
 
-  const handleGenerateDocument = (docType: string) => {
-    // Simple placeholder generation - opens download
-    const title = docType === "hoja_consignacion" ? "HOJA DE CONSIGNACIÓN" : "CARTA DE SOLICITUD";
+  const handleGenerateDocument = async (docType: string) => {
+    if (docType === "hoja_consignacion") {
+      try {
+        // Fetch form_data for pre-filling
+        const { data: formDataRow } = await supabase
+          .from("form_data")
+          .select("form_data")
+          .eq("user_id", user!.id)
+          .eq("category", category!)
+          .maybeSingle();
+
+        const fd = (formDataRow?.form_data as Record<string, any>) || {};
+
+        // Determine razón social based on category
+        let razonSocial = "";
+        if (category === "distribuidor" || category === "constructor") {
+          razonSocial = fd.razon_social || "";
+        } else if (category === "emprendedor") {
+          razonSocial = fd.nombre_completo || "";
+        } else if (category === "alcaldia") {
+          razonSocial = fd.nombre_ente || "";
+        }
+
+        const rif = fd.rif || fd.rif_institucional || "";
+
+        // Build set of uploaded/approved doc types
+        const uploadedDocTypes = new Set<string>();
+        for (const d of documents) {
+          if (d.status === "uploaded" || d.status === "approved") {
+            uploadedDocTypes.add(d.document_type);
+          }
+        }
+
+        generateHojaConsignacion({
+          razonSocial,
+          rif,
+          representanteLegal: fd.representante_legal || profile?.full_name || "",
+          cedulaRepresentante: fd.cedula || "",
+          celular: profile?.phone || fd.telefono || "",
+          telefonoFijo: fd.telefono_institucional || "",
+          correo: profile?.email || fd.correo || fd.correo_institucional || "",
+          requirements,
+          uploadedDocTypes,
+          category: category!,
+          categoryLabel: category ? categoryLabels[category] : "",
+        });
+
+        toast({ title: "PDF generado", description: "Descargue, firme, selle y vuelva a cargar el documento." });
+      } catch (error: any) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      }
+      return;
+    }
+
+    // Carta de solicitud — keep as .txt
+    const title = "CARTA DE SOLICITUD";
     const content = `
 CORPORACIÓN SOCIALISTA DE CEMENTO (CSC)
 ${title}
