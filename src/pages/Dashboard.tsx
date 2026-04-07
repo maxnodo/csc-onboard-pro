@@ -260,8 +260,8 @@ Nombre y Cédula
 
   const isApprovedDocumentation = profile.status === "approved_documentation";
 
-  const lastDownload = (profile as any).last_folder_download_at
-    ? new Date((profile as any).last_folder_download_at).toLocaleDateString("es-VE", {
+  const lastDownload = profile.last_folder_download_at
+    ? new Date(profile.last_folder_download_at).toLocaleDateString("es-VE", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
