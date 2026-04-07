@@ -94,6 +94,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          last_folder_download_at: string | null
           onboarding_step: number
           phone: string | null
           sede_id: string | null
@@ -107,6 +108,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          last_folder_download_at?: string | null
           onboarding_step?: number
           phone?: string | null
           sede_id?: string | null
@@ -120,6 +122,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          last_folder_download_at?: string | null
           onboarding_step?: number
           phone?: string | null
           sede_id?: string | null
