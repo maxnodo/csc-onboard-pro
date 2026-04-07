@@ -133,7 +133,7 @@ export function generateHojaConsignacion(data: HojaData) {
     doc.text(checkmark, marginL + 2, y + 3.8);
 
     doc.setFont("helvetica", "normal");
-    let label = req.label;
+    let label = req.label.replace(/≤/g, "<=");
     if (req.conditional && req.conditionalLabel) {
       label += ` (${req.conditionalLabel})`;
     }
