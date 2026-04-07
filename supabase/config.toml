@@ -7,3 +7,5 @@ project_id = "mrrfgaiumikswfjtusfj"
     verify_jwt = false
   [functions.notify-documentation-approved]
     verify_jwt = false
+  [functions.generate-client-folder]
+    verify_jwt = true
